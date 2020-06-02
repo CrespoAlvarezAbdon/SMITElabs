@@ -53,7 +53,8 @@ void ASLGod::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetMovementSpeed(UndiminishedMovementSpeed);
+	SetMovementSpeed(BaseMovementSpeed);
+	CurrentBasicAttackDamage = BaseBasicAttackDamage;
 	
 	if (this == UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
 	{
@@ -64,6 +65,59 @@ void ASLGod::BeginPlay()
 		ResetProgression();
 	}
 }
+
+void ASLGod::SetCurrentHealth(float Val, AActor* Origin)
+{
+	float OriginalHealth = CurrentHealth;
+	CurrentHealth -= Val;
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s dealt %f damage to %s (%f -> %f)"), *Origin->GetName(), Val, *this->GetName(), OriginalHealth, CurrentHealth));
+	if (CurrentHealth <= 0)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s has been slain by %s!"), *this->GetName(), *Origin->GetName()));
+		Destroy();
+	}
+}
+
+void ASLGod::SetMovementSpeed(float Val)
+{
+	UndiminishedMovementSpeed = Val;
+	if (UndiminishedMovementSpeed >= MovementSpeedDiminishments[0])
+	{
+		if (UndiminishedMovementSpeed >= MovementSpeedDiminishments[1])
+		{
+			DiminishedMovementSpeed = MovementSpeedDiminishments[0] + (MovementSpeedDiminishments[1] - MovementSpeedDiminishments[0]) * MovementSpeedDiminishmentMultipliers[0] + (Val - MovementSpeedDiminishments[1]) * MovementSpeedDiminishmentMultipliers[1];
+		}
+		else
+		{
+			DiminishedMovementSpeed = MovementSpeedDiminishments[0] + (Val - MovementSpeedDiminishments[0]) * MovementSpeedDiminishmentMultipliers[0];
+		}
+	}
+	else if (UndiminishedMovementSpeed < MinimumMovementSpeed)
+	{
+		UndiminishedMovementSpeed = MinimumMovementSpeed;
+		DiminishedMovementSpeed = MinimumMovementSpeed;
+	}
+	else
+	{
+		DiminishedMovementSpeed = UndiminishedMovementSpeed;
+	}
+}
+
+void ASLGod::SetBasicAttackSpeed(float Val) { BasicAttackSpeed = Val; }
+
+float ASLGod::GetCurrentBasicAttackDamage() const { return CurrentBasicAttackDamage; }
+
+float ASLGod::GetPhysicalPower() const { return PhysicalPower; }
+
+float ASLGod::GetMagicalPower() const { return MagicalPower; }
+
+float ASLGod::GetPhysicalPenetration() const { return PhysicalPenetration;  }
+
+float ASLGod::GetMagicalPenetration() const { return MagicalPenetration; }
+
+float ASLGod::GetBasicAttackPowerScaling() const { return BasicAttackPowerScaling; }
+
+bool ASLGod::GetIsPhysicalDamage() const { return bIsPhysicalDamage; }
 
 void ASLGod::LookUp(float Val)
 {
@@ -134,73 +188,6 @@ void ASLGod::MoveDiagonally(int ValX, int ValY)
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s"), *GetVelocity().ToString()));
 }
 
-void ASLGod::SetMovementSpeed(float Val)
-{
-	UndiminishedMovementSpeed = Val;
-	if (UndiminishedMovementSpeed >= MovementSpeedDiminishments[0])
-	{
-		if (UndiminishedMovementSpeed >= MovementSpeedDiminishments[1])
-		{
-			DiminishedMovementSpeed = MovementSpeedDiminishments[0] + (MovementSpeedDiminishments[1] - MovementSpeedDiminishments[0]) * MovementSpeedDiminishmentMultipliers[0] + (Val - MovementSpeedDiminishments[1]) * MovementSpeedDiminishmentMultipliers[1];
-		}
-		else
-		{
-			DiminishedMovementSpeed = MovementSpeedDiminishments[0] + (Val - MovementSpeedDiminishments[0]) * MovementSpeedDiminishmentMultipliers[0];
-		}
-	}
-	else if (UndiminishedMovementSpeed < MinimumMovementSpeed)
-	{
-		UndiminishedMovementSpeed = MinimumMovementSpeed;
-		DiminishedMovementSpeed = MinimumMovementSpeed;
-	}
-	else
-	{
-		DiminishedMovementSpeed = UndiminishedMovementSpeed;
-	}
-}
-
-void ASLGod::SetBasicAttackSpeed(float Val)
-{
-	BasicAttackSpeed = Val;
-}
-
-void ASLGod::SetCurrentHealth(float Val, AActor* Origin)
-{
-	float OriginalHealth = CurrentHealth;
-	CurrentHealth -= Val;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s dealt %f damage to %s (%f -> %f)"), *Origin->GetName(), Val, *this->GetName(), OriginalHealth, CurrentHealth));
-	if (CurrentHealth <= 0)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s has been slain by %s!"), *this->GetName(), *Origin->GetName()));
-		Destroy();
-	}
-}
-
-float ASLGod::GetCurrentBasicAttackDamage()
-{
-	return CurrentBasicAttackDamage;
-}
-
-float ASLGod::GetPhysicalPower()
-{
-	return PhysicalPower;
-}
-
-float ASLGod::GetMagicalPower()
-{
-	return MagicalPower;
-}
-
-float ASLGod::GetBasicAttackPowerScaling()
-{
-	return BasicAttackPowerScaling;
-}
-
-bool ASLGod::GetIsPhysicalDamage()
-{
-	return bIsPhysicalDamage;
-}
-
 void ASLGod::OnBeginJump()
 {
 	if (BasicAttackPenalty == 1)
@@ -242,7 +229,7 @@ void ASLGod::BeginFireBasicAttack()
 			BasicAttackPenalty = BasicAttackRangedPenalty;
 			CurrentAimComponent = RangedAimComponent;
 			RangedAimComponent->SetMaterial(0, MTargeterWindup);
-			if (bHasMinPrefire && BasicAttackRefireProgression[CurrentProgression] > BasicAttackRefireProgression[CurrentProgression] / BasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(RangedPrefireTimerHandle, RangedPrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * ((BasicAttackRefireProgression[CurrentProgression] / BasicAttackSpeed) / BasicAttackRefireProgression[CurrentProgression]), false);
+			if (bHasScalingPrefire && BasicAttackRefireProgression[CurrentProgression] > BasicAttackRefireProgression[CurrentProgression] / BasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(RangedPrefireTimerHandle, RangedPrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * ((BasicAttackRefireProgression[CurrentProgression] / BasicAttackSpeed) / BasicAttackRefireProgression[CurrentProgression]), false);
 			else GetWorld()->GetTimerManager().SetTimer(RangedPrefireTimerHandle, RangedPrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression], false);
 		}
 		else
@@ -250,7 +237,7 @@ void ASLGod::BeginFireBasicAttack()
 			BasicAttackPenalty = BasicAttackMeleePenalty;
 			CurrentAimComponent = MeleeAimComponent;
 			MeleeAimComponent->SetMaterial(0, MTargeterWindup);
-			if (bHasMinPrefire && BasicAttackPrefireProgression[CurrentProgression] < BasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(MeleePrefireTimerHandle, MeleePrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * BasicAttackPrefireProgression[CurrentProgression] / BasicAttackSpeed, false);
+			if (bHasScalingPrefire && BasicAttackPrefireProgression[CurrentProgression] < BasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(MeleePrefireTimerHandle, MeleePrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * BasicAttackPrefireProgression[CurrentProgression] / BasicAttackSpeed, false);
 			else GetWorld()->GetTimerManager().SetTimer(MeleePrefireTimerHandle, MeleePrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression], false);
 		}
 	}

@@ -20,6 +20,14 @@ ASLRangedBasicProjectile::ASLRangedBasicProjectile()
 	StaticMeshComponent->OnComponentBeginOverlap.AddDynamic(this, &ASLRangedBasicProjectile::OnOverlapBegin);
 }
 
+// Called when the game starts or when spawned
+void ASLRangedBasicProjectile::BeginPlay()
+{
+	Super::BeginPlay();
+	SetActorLocation((GetActorLocation() + SceneComponent->GetForwardVector() * BasicAttackDisjoints[0] + SceneComponent->GetRightVector() * BasicAttackDisjoints[1]));
+	StartingLocation = GetActorLocation();
+}
+
 void ASLRangedBasicProjectile::SetBasicAttackDisjoints(TArray<float> Val)
 {
 	BasicAttackDisjoints[0] = Val[0];
@@ -36,14 +44,6 @@ void ASLRangedBasicProjectile::SetProjectileRange(float Val) { ProjectileRange =
 
 void ASLRangedBasicProjectile::SetProjectileSize(float Val) { StaticMeshComponent->SetRelativeScale3D(FVector(ProjectileHeight, Val, ProjectileLength)); }
 
-// Called when the game starts or when spawned
-void ASLRangedBasicProjectile::BeginPlay()
-{
-	Super::BeginPlay();
-	SetActorLocation((GetActorLocation() + SceneComponent->GetForwardVector() * BasicAttackDisjoints[0] + SceneComponent->GetRightVector() * BasicAttackDisjoints[1]));
-	StartingLocation = GetActorLocation();
-}
-
 void ASLRangedBasicProjectile::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit)
 {
 	if (!OtherActor->Implements<USLDamageable>()) Destroy();
@@ -52,9 +52,18 @@ void ASLRangedBasicProjectile::OnOverlapBegin(UPrimitiveComponent* OverlappedCom
 		if (Cast<ASLGod>(Origin))
 		{
 			ASLGod* God = Cast<ASLGod>(Origin);
+			ISLDamageable* DamagedTarget = Cast<ISLDamageable>(OtherActor);
 
-			if (God->GetIsPhysicalDamage()) Cast<ISLDamageable>(OtherActor)->SetCurrentHealth((God->GetCurrentBasicAttackDamage() + God->GetPhysicalPower() * God->GetBasicAttackPowerScaling()) * DamageProgressionMultiplier, Origin);
-			else Cast<ISLDamageable>(OtherActor)->SetCurrentHealth((God->GetCurrentBasicAttackDamage() + God->GetMagicalPower() * God->GetBasicAttackPowerScaling()) * DamageProgressionMultiplier, Origin);
+			if (God->GetIsPhysicalDamage())
+			{ 
+				float TotalProtections = DamagedTarget->GetPhysicalProtections() - God->GetPhysicalPenetration() > 0 ? DamagedTarget->GetPhysicalProtections() - God->GetPhysicalPenetration() : 0;
+				DamagedTarget->SetCurrentHealth((((God->GetCurrentBasicAttackDamage() + God->GetPhysicalPower() * God->GetBasicAttackPowerScaling()) * DamageProgressionMultiplier) * 100) / (TotalProtections + 100), Origin);
+			}
+			else 
+			{
+				float TotalProtections = DamagedTarget->GetMagicalProtections() - God->GetMagicalPenetration() > 0 ? DamagedTarget->GetMagicalProtections() - God->GetMagicalPenetration() : 0;
+				DamagedTarget->SetCurrentHealth((((God->GetCurrentBasicAttackDamage() + God->GetMagicalPower() * God->GetBasicAttackPowerScaling()) * DamageProgressionMultiplier) * 100) / (TotalProtections + 100), Origin);
+			}
 		}
 		Destroy();
 	}

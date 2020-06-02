@@ -25,6 +25,10 @@ public:
 
 	virtual void SetCurrentHealth(float Val, AActor* Origin);
 
+	virtual float GetPhysicalProtections();
+
+	virtual float GetMagicalProtections();
+
 protected:
 
 	float BaseHealth{ 600 };

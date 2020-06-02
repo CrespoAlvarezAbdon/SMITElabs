@@ -42,6 +42,26 @@ public:
 	// Sets default values for this character's properties
 	ASLGod();
 
+	virtual void SetCurrentHealth(float Val, AActor* Origin) override;
+
+	void SetMovementSpeed(float Val);
+
+	void SetBasicAttackSpeed(float Val);
+
+	float GetCurrentBasicAttackDamage() const;
+
+	float GetPhysicalPower() const;
+
+	float GetMagicalPower() const;
+
+	float GetPhysicalPenetration() const;
+
+	float GetMagicalPenetration() const;
+
+	float GetBasicAttackPowerScaling() const;
+
+	bool GetIsPhysicalDamage() const;
+
 	void LookUp(float Val);
 
 	void TurnRight(float Val);
@@ -51,22 +71,6 @@ public:
 	void MoveRight(float Val);
 
 	void MoveDiagonally(int ValX, int ValY);
-
-	void SetMovementSpeed(float Val);
-
-	void SetBasicAttackSpeed(float Val);
-
-	virtual void SetCurrentHealth(float Val, AActor* Origin) override;
-
-	float GetCurrentBasicAttackDamage();
-
-	float GetPhysicalPower();
-
-	float GetMagicalPower();
-
-	float GetBasicAttackPowerScaling();
-
-	bool GetIsPhysicalDamage();
 
 	void OnBeginJump();
 
@@ -133,10 +137,10 @@ protected:
 
 	UStaticMeshComponent* CurrentAimComponent;
 
+	UPROPERTY(EditAnywhere, Category = "Statistics")
 	float BaseMovementSpeed{ 360 };
 
-	UPROPERTY(EditAnywhere, Category = "Statistics")
-	float UndiminishedMovementSpeed{ BaseMovementSpeed };
+	float UndiminishedMovementSpeed{ 0 };
 
 	float DiminishedMovementSpeed{ 0 };
 
@@ -147,32 +151,38 @@ protected:
 
 	bool bIsJumping{ false };
 
-	UPROPERTY(EditAnywhere, Category = "Statistics")
 	bool bFatalis{ false };
 
-	UPROPERTY(EditAnywhere, Category = "Statistics")
-	bool bHasMinPrefire{ true };
+	UPROPERTY(EditAnywhere, Category = "Statistics") //TODO Move to progression
+	bool bHasScalingPrefire{ true };
 
 	float BasicAttackPenalty{ 1 };
 
+	UPROPERTY(EditAnywhere, Category = "Statistics", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float BaseBasicAttackDamage{ 43 };
 
+	UPROPERTY(EditAnywhere, Category = "Statistics", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float LevelBasicAttackDamage{ 1 };
 
-	UPROPERTY(EditAnywhere, Category = "Statistics")
-	float CurrentBasicAttackDamage{ BaseBasicAttackDamage };
+	float CurrentBasicAttackDamage{ 0 };
 
-	UPROPERTY(EditAnywhere, Category = "Statistics")
+	UPROPERTY(EditAnywhere, Category = "Statistics", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float BasicAttackPowerScaling{ 1 };
 
-	UPROPERTY(EditAnywhere, Category = "Statistics")
+	UPROPERTY(EditAnywhere, Category = "Statistics", meta = (ClampMin = "1.0", UIMin = "1.0")) //TODO Move to progression
 	float RangedBasicProjectileSpeed{ 110 };
 
-	UPROPERTY(EditAnywhere, Category = "Statistics")
+	UPROPERTY(EditAnywhere, Category = "Statistics", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float PhysicalPower{ 0 };
 
-	UPROPERTY(EditAnywhere, Category = "Statistics")
+	UPROPERTY(EditAnywhere, Category = "Statistics", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float MagicalPower{ 0 };
+
+	UPROPERTY(EditAnywhere, Category = "Statistics", meta=(ClampMin = "0.0", UIMin = "0.0", ClampMax = "50.0", UIMax = "50.0"))
+	float PhysicalPenetration{ 0 };
+
+	UPROPERTY(EditAnywhere, Category = "Statistics", meta = (ClampMin = "0.0", UIMin = "0.0", ClampMax = "50.0", UIMax = "50.0"))
+	float MagicalPenetration{ 0 };
 
 	UPROPERTY(EditAnywhere, Category = "Statistics")
 	bool bIsPhysicalDamage{ true };
@@ -190,10 +200,10 @@ protected:
 	TArray<float> BasicAttackDamageProgression{ BasicAttackRefireProgression };
 
 	UPROPERTY(EditAnywhere, Category = "Progression")
-	TArray<float> RangedBasicAttackProjectileSizeProgression{ 3, 3, 3 };
+	TArray<float> BasicAttackDisjointProgression{ 306.25, 0, 306.25, 0, 306.25, 0 };
 
-	UPROPERTY(EditAnywhere, Category = "Statistics")
-	TArray<float>  BasicAttackDisjointProgression{ 306.25, 0, 306.25, 0, 306.25, 0 };
+	UPROPERTY(EditAnywhere, Category = "Progression")
+	TArray<float> RangedBasicAttackProjectileSizeProgression{ 3, 3, 3 };
 
 	UPROPERTY(EditAnywhere, Category = "Progression")
 	TArray<bool> bCleaveProgression{ false, false, false };
@@ -225,6 +235,10 @@ protected:
 	const float MaximumDiminishedMovementSpeed{ 753.55 };
 
 	const float ProgressionResetTime{ 1 };
+
+	const float MaxProtection{ 325 };
+
+	const float MaxPenetration{ 50 };
 
 	FTimerHandle BasicAttackTimerHandle;
 
