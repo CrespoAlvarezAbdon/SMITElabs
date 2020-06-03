@@ -229,7 +229,7 @@ void ASLGod::BeginFireBasicAttack()
 			BasicAttackPenalty = BasicAttackRangedPenalty;
 			CurrentAimComponent = RangedAimComponent;
 			RangedAimComponent->SetMaterial(0, MTargeterWindup);
-			if (bHasScalingPrefire && BasicAttackRefireProgression[CurrentProgression] > BasicAttackRefireProgression[CurrentProgression] / BasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(RangedPrefireTimerHandle, RangedPrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * ((BasicAttackRefireProgression[CurrentProgression] / BasicAttackSpeed) / BasicAttackRefireProgression[CurrentProgression]), false);
+			if (bHasScalingPrefireProgression[CurrentProgression] && BasicAttackRefireProgression[CurrentProgression] > BasicAttackRefireProgression[CurrentProgression] / BasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(RangedPrefireTimerHandle, RangedPrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * ((BasicAttackRefireProgression[CurrentProgression] / BasicAttackSpeed) / BasicAttackRefireProgression[CurrentProgression]), false);
 			else GetWorld()->GetTimerManager().SetTimer(RangedPrefireTimerHandle, RangedPrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression], false);
 		}
 		else
@@ -237,7 +237,7 @@ void ASLGod::BeginFireBasicAttack()
 			BasicAttackPenalty = BasicAttackMeleePenalty;
 			CurrentAimComponent = MeleeAimComponent;
 			MeleeAimComponent->SetMaterial(0, MTargeterWindup);
-			if (bHasScalingPrefire && BasicAttackPrefireProgression[CurrentProgression] < BasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(MeleePrefireTimerHandle, MeleePrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * BasicAttackPrefireProgression[CurrentProgression] / BasicAttackSpeed, false);
+			if (bHasScalingPrefireProgression[CurrentProgression] && BasicAttackPrefireProgression[CurrentProgression] < BasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(MeleePrefireTimerHandle, MeleePrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * BasicAttackPrefireProgression[CurrentProgression] / BasicAttackSpeed, false);
 			else GetWorld()->GetTimerManager().SetTimer(MeleePrefireTimerHandle, MeleePrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression], false);
 		}
 	}
@@ -264,12 +264,12 @@ void ASLGod::OnRangedPrefireTimerEnd()
 
 void ASLGod::FireRangedBasicAttack()
 {
-	TArray<float> BasicAttackDisjoints{ BasicAttackDisjointProgression[CurrentProgression * 2], BasicAttackDisjointProgression[CurrentProgression * 2 + 1] };
 	ASLRangedBasicProjectile* SpawnedRangedBasicProjectile = GetWorld()->SpawnActorDeferred<ASLRangedBasicProjectile>(RangedBasicProjectile, GetTransform());
+	TArray<float> BasicAttackDisjoints{ BasicAttackDisjointProgression[CurrentProgression * 2], BasicAttackDisjointProgression[CurrentProgression * 2 + 1] };
 	SpawnedRangedBasicProjectile->SetBasicAttackDisjoints(BasicAttackDisjoints);
 	SpawnedRangedBasicProjectile->SetOrigin(this);
 	SpawnedRangedBasicProjectile->SetDamageProgressionMultiplier(BasicAttackDamageProgression[CurrentProgression]);
-	SpawnedRangedBasicProjectile->SetProjectileSpeed(RangedBasicProjectileSpeed);
+	SpawnedRangedBasicProjectile->SetProjectileSpeed(RangedBasicAttackProjectileSpeedProgression[CurrentProgression]);
 	SpawnedRangedBasicProjectile->SetProjectileRange(BasicAttackRangeProgression[CurrentProgression]);
 	SpawnedRangedBasicProjectile->SetProjectileSize(RangedBasicAttackProjectileSizeProgression[CurrentProgression]);
 	UGameplayStatics::FinishSpawningActor(SpawnedRangedBasicProjectile, SpawnedRangedBasicProjectile->GetTransform());
@@ -303,10 +303,10 @@ void ASLGod::ResetProgression()
 	}
 	else
 	{
-		RangedAimComponent->SetHiddenInGame(true);
-		RangedAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression], BasicAttackRangeProgression[CurrentProgression], .025));
-		MeleeAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[CurrentProgression * 2], BasicAttackDisjointProgression[CurrentProgression * 2 + 1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 2.5));
 		MeleeAimComponent->SetHiddenInGame(false);
+		MeleeAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression], BasicAttackRangeProgression[CurrentProgression], .025));
+		MeleeAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[CurrentProgression * 2], BasicAttackDisjointProgression[CurrentProgression * 2 + 1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 2.5));
+		RangedAimComponent->SetHiddenInGame(true);
 		CurrentAimComponent = MeleeAimComponent;
 	}
 	CurrentAimComponent->SetMaterial(0, MTargeterStandby);
@@ -344,7 +344,7 @@ void ASLGod::ChangeBasicAttackTargeter()
 		else
 		{
 			CurrentAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[0], BasicAttackRangeProgression[0], .025));
-			CurrentAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[0], BasicAttackDisjointProgression[1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2));
+			CurrentAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[0], BasicAttackDisjointProgression[1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 2.5));
 		}
 	}
 }

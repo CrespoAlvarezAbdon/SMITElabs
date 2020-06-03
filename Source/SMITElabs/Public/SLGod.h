@@ -153,9 +153,6 @@ protected:
 
 	bool bFatalis{ false };
 
-	UPROPERTY(EditAnywhere, Category = "Statistics") //TODO Move to progression
-	bool bHasScalingPrefire{ true };
-
 	float BasicAttackPenalty{ 1 };
 
 	UPROPERTY(EditAnywhere, Category = "Statistics", meta = (ClampMin = "0.0", UIMin = "0.0"))
@@ -168,9 +165,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Statistics", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float BasicAttackPowerScaling{ 1 };
-
-	UPROPERTY(EditAnywhere, Category = "Statistics", meta = (ClampMin = "1.0", UIMin = "1.0")) //TODO Move to progression
-	float RangedBasicProjectileSpeed{ 110 };
 
 	UPROPERTY(EditAnywhere, Category = "Statistics", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float PhysicalPower{ 0 };
@@ -206,10 +200,16 @@ protected:
 	TArray<float> RangedBasicAttackProjectileSizeProgression{ 3, 3, 3 };
 
 	UPROPERTY(EditAnywhere, Category = "Progression")
+	TArray<float> RangedBasicAttackProjectileSpeedProgression{ 110, 110, 110 };
+
+	UPROPERTY(EditAnywhere, Category = "Progression")
 	TArray<bool> bCleaveProgression{ false, false, false };
 
 	UPROPERTY(EditAnywhere, Category = "Progression")
 	TArray<bool> bIsBasicAttackRangedProgression{ true, true, true };
+
+	UPROPERTY(EditAnywhere, Category = "Progression")
+	TArray<bool> bHasScalingPrefireProgression{ true, true, true };
 
 	int CurrentProgression{ 0 };
 
