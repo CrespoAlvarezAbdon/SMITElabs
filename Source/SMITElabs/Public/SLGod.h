@@ -22,6 +22,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class UCapsuleComponent;
 class UGameplayStatics;
+class UPrimitiveComponent;
 class UArrowComponent;
 class APlayerController;
 class UCharacterMovementComponent;

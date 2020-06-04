@@ -280,6 +280,28 @@ void ASLGod::FireRangedBasicAttack()
 void ASLGod::OnMeleePrefireTimerEnd()
 {
 	FireMeleeBasicAttack();
+	TArray<AActor*> OverlappingActors;
+	MeleeAimComponent->GetOverlappingActors(OverlappingActors);
+	float ShortestDistance{ -1 };
+	AActor* CurrentTarget{ nullptr };
+	for (AActor* var : OverlappingActors)
+	{
+		if (Cast<ISLDamageable>(var) && var != this)
+		{
+			if (FVector::Dist(this->GetActorLocation(), var->GetActorLocation()) < ShortestDistance || ShortestDistance == -1)
+			{
+				FHitResult HitResult;
+				bool IsBlocked = GetWorld()->LineTraceSingleByChannel(HitResult, this->GetActorLocation(), var->GetActorLocation(), ECollisionChannel::ECC_GameTraceChannel1);
+				if (!IsBlocked)
+				{
+					ShortestDistance = FVector::Dist(this->GetActorLocation(), var->GetActorLocation());
+					CurrentTarget = var;
+					
+				}
+			}
+		}
+	}
+	if (CurrentTarget) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s"), *CurrentTarget->GetName()));
 }
 
 void ASLGod::FireMeleeBasicAttack()

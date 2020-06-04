@@ -31,7 +31,7 @@ void ASLRangedBasicProjectile::BeginPlay()
 void ASLRangedBasicProjectile::SetBasicAttackDisjoints(TArray<float> Val)
 {
 	BasicAttackDisjoints[0] = Val[0];
-	BasicAttackDisjoints[1] = Val[1];
+	BasicAttackDisjoints[1] = Val[1];	
 }
 
 void ASLRangedBasicProjectile::SetOrigin(ASLGod* Val) { Origin = Val; }
