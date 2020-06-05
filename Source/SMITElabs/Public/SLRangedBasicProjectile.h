@@ -7,11 +7,13 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/ArrowComponent.h"
 #include "Components/SceneComponent.h"
+#include "Components/SphereComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "SLRangedBasicProjectile.generated.h"
 
 class USceneComponent;
 class UStaticMeshComponent;
+class USphereComponent;
 class UArrowComponent;
 class UPrimitiveComponent;
 class AActor;
@@ -38,6 +40,12 @@ public:
 
 	void SetProjectileSize(float Val);
 
+	void SetCleave(bool Val);
+
+	void SetCleaveDamage(float Val);
+
+	void SetCleaveRange(float Val);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -47,6 +55,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
 	UStaticMeshComponent* StaticMeshComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Collision")
+	USphereComponent* CleaveCollisionComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Arrow")
 	UArrowComponent* ArrowComponent;
@@ -68,6 +79,12 @@ protected:
 	const float ProjectileLength{ 3 };
 
 	const float ProjectileHeight{ 1 };
+
+	bool bCleave;
+
+	float CleaveDamage;
+
+	float CleaveRange;
 
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit);

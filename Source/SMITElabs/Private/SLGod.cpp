@@ -111,9 +111,13 @@ float ASLGod::GetPhysicalPower() const { return PhysicalPower; }
 
 float ASLGod::GetMagicalPower() const { return MagicalPower; }
 
-float ASLGod::GetPhysicalPenetration() const { return PhysicalPenetration;  }
+float ASLGod::GetFlatPhysicalPenetration() const { return FlatPhysicalPenetration; }
 
-float ASLGod::GetMagicalPenetration() const { return MagicalPenetration; }
+float ASLGod::GetFlatMagicalPenetration() const { return FlatMagicalPenetration; }
+
+float ASLGod::GetPercentagePhysicalPenetration() const { return PercentagePhysicalPenetration; }
+
+float ASLGod::GetPercentageMagicalPenetration() const { return PercentageMagicalPenetration; }
 
 float ASLGod::GetBasicAttackPowerScaling() const { return BasicAttackPowerScaling; }
 
@@ -272,6 +276,9 @@ void ASLGod::FireRangedBasicAttack()
 	SpawnedRangedBasicProjectile->SetProjectileSpeed(RangedBasicAttackProjectileSpeedProgression[CurrentProgression]);
 	SpawnedRangedBasicProjectile->SetProjectileRange(BasicAttackRangeProgression[CurrentProgression]);
 	SpawnedRangedBasicProjectile->SetProjectileSize(RangedBasicAttackProjectileSizeProgression[CurrentProgression]);
+	SpawnedRangedBasicProjectile->SetCleave(bCleaveProgression[CurrentProgression]);
+	SpawnedRangedBasicProjectile->SetCleaveDamage(CleaveDamageProgression[CurrentProgression]);
+	SpawnedRangedBasicProjectile->SetCleaveRange(RangedCleaveRangeProgression[CurrentProgression]);
 	UGameplayStatics::FinishSpawningActor(SpawnedRangedBasicProjectile, SpawnedRangedBasicProjectile->GetTransform());
 	ChangeBasicAttackTargeter();
 	CurrentAimComponent->SetMaterial(0, MTargeterFiring);
@@ -291,12 +298,14 @@ void ASLGod::OnMeleePrefireTimerEnd()
 			if (FVector::Dist(this->GetActorLocation(), var->GetActorLocation()) < ShortestDistance || ShortestDistance == -1)
 			{
 				FHitResult HitResult;
-				bool IsBlocked = GetWorld()->LineTraceSingleByChannel(HitResult, this->GetActorLocation(), var->GetActorLocation(), ECollisionChannel::ECC_GameTraceChannel1);
-				if (!IsBlocked)
+				if (!GetWorld()->LineTraceSingleByChannel(HitResult, this->GetActorLocation(), var->GetActorLocation(), ECollisionChannel::ECC_GameTraceChannel1))
 				{
-					ShortestDistance = FVector::Dist(this->GetActorLocation(), var->GetActorLocation());
-					CurrentTarget = var;
-					
+					if (!bCleaveProgression[CurrentProgression])
+					{
+						ShortestDistance = FVector::Dist(this->GetActorLocation(), var->GetActorLocation());
+						CurrentTarget = var;
+					}
+					else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s"), *var->GetName()));
 				}
 			}
 		}

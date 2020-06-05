@@ -55,9 +55,13 @@ public:
 
 	float GetMagicalPower() const;
 
-	float GetPhysicalPenetration() const;
+	float GetFlatPhysicalPenetration() const;
 
-	float GetMagicalPenetration() const;
+	float GetFlatMagicalPenetration() const;
+
+	float GetPercentagePhysicalPenetration() const;
+
+	float GetPercentageMagicalPenetration() const;
 
 	float GetBasicAttackPowerScaling() const;
 
@@ -174,10 +178,16 @@ protected:
 	float MagicalPower{ 0 };
 
 	UPROPERTY(EditAnywhere, Category = "Statistics", meta=(ClampMin = "0.0", UIMin = "0.0", ClampMax = "50.0", UIMax = "50.0"))
-	float PhysicalPenetration{ 0 };
+	float FlatPhysicalPenetration{ 0 };
 
 	UPROPERTY(EditAnywhere, Category = "Statistics", meta = (ClampMin = "0.0", UIMin = "0.0", ClampMax = "50.0", UIMax = "50.0"))
-	float MagicalPenetration{ 0 };
+	float FlatMagicalPenetration{ 0 };
+
+	UPROPERTY(EditAnywhere, Category = "Statistics", meta = (ClampMin = "0.0", UIMin = "0.0", ClampMax = "0.4", UIMax = "0.4"))
+	float PercentagePhysicalPenetration{ 0 };
+
+	UPROPERTY(EditAnywhere, Category = "Statistics", meta = (ClampMin = "0.0", UIMin = "0.0", ClampMax = "0.4", UIMax = "0.4"))
+	float PercentageMagicalPenetration{ 0 };
 
 	UPROPERTY(EditAnywhere, Category = "Statistics")
 	bool bIsPhysicalDamage{ true };
@@ -205,6 +215,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Progression")
 	TArray<bool> bCleaveProgression{ false, false, false };
+
+	UPROPERTY(EditAnywhere, Category = "Progression")
+	TArray<float> CleaveDamageProgression{ 1, 1, 1 };
+
+	UPROPERTY(EditAnywhere, Category = "Progression")
+	TArray<float> RangedCleaveRangeProgression{ 7.5, 7.5, 7.5 };
 
 	UPROPERTY(EditAnywhere, Category = "Progression")
 	TArray<bool> bIsBasicAttackRangedProgression{ true, true, true };
