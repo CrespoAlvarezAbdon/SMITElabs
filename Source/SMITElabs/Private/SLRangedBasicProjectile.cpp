@@ -16,17 +16,21 @@ ASLRangedBasicProjectile::ASLRangedBasicProjectile()
 	StaticMeshComponent->SetupAttachment(RootComponent);
 	CleaveCollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("CleaveCollisionComponent"));
 	CleaveCollisionComponent->SetupAttachment(RootComponent);
+	WallCollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("WallCollisionComponent"));
+	WallCollisionComponent->SetupAttachment(RootComponent);
 
 	ArrowComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComponent"));
 	ArrowComponent->SetupAttachment(RootComponent);
 
 	StaticMeshComponent->OnComponentBeginOverlap.AddDynamic(this, &ASLRangedBasicProjectile::OnOverlapBegin);
+	WallCollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ASLRangedBasicProjectile::OnWallHit);
 }
 
 // Called when the game starts or when spawned
 void ASLRangedBasicProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+
 	SetActorLocation((GetActorLocation() + SceneComponent->GetForwardVector() * BasicAttackDisjoints[0] + SceneComponent->GetRightVector() * BasicAttackDisjoints[1]));
 	StartingLocation = GetActorLocation();
 }
@@ -45,7 +49,7 @@ void ASLRangedBasicProjectile::SetProjectileSpeed(float Val) { ProjectileSpeed =
 
 void ASLRangedBasicProjectile::SetProjectileRange(float Val) { ProjectileRange = Val; }
 
-void ASLRangedBasicProjectile::SetProjectileSize(float Val) { ProjectileSize = Val;  StaticMeshComponent->SetRelativeScale3D(FVector(ProjectileHeight, ProjectileSize, ProjectileLength)); }
+void ASLRangedBasicProjectile::SetProjectileSize(float Val) { ProjectileSize = Val;  StaticMeshComponent->SetRelativeScale3D(FVector(ProjectileHeight, ProjectileSize, ProjectileLength)); 	WallCollisionComponent->SetBoxExtent(FVector(ProjectileLength * 50, 25, 25)); }
 
 void ASLRangedBasicProjectile::SetCleave(bool Val) { bCleave = Val; }
 
@@ -58,8 +62,7 @@ void ASLRangedBasicProjectile::OnOverlapBegin(UPrimitiveComponent* OverlappedCom
 	// TODO Have Projectiles use a different collision for walls, since they don't seem to use the same hitbox used for damageable targets in-game, 
 	//      more like a ~<1 unit wide shot similar to how Melee only hits a target if both God central points have LoS.
 
-	if (Cast<ASLRangedBasicProjectile>(OtherActor)) return;
-	if (!OtherActor->Implements<USLDamageable>()) Destroy();
+	if (!OtherActor->Implements<USLDamageable>() || Cast<ASLRangedBasicProjectile>(OtherActor)) return;
 	else if (Cast<ISLDamageable>(OtherActor) != Cast<ISLDamageable>(Origin))
 	{
 		if (Cast<ASLGod>(Origin))
@@ -106,6 +109,11 @@ void ASLRangedBasicProjectile::OnOverlapBegin(UPrimitiveComponent* OverlappedCom
 		}
 		Destroy();
 	}
+}
+
+void ASLRangedBasicProjectile::OnWallHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit)
+{
+	if (!OtherActor->Implements<USLDamageable>() && OtherActor != this) { Destroy(); return; }
 }
 
 // Called every frame

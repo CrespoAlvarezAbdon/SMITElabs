@@ -286,11 +286,13 @@ void ASLGod::FireRangedBasicAttack()
 
 void ASLGod::OnMeleePrefireTimerEnd()
 {
+	// I know there's a cleaner and more efficient way of doing this since I'm current doing the check twice, but it will do for now, will do something about the repeating damage code later
+
 	FireMeleeBasicAttack();
 	TArray<AActor*> OverlappingActors;
 	MeleeAimComponent->GetOverlappingActors(OverlappingActors);
 	float ShortestDistance{ -1 };
-	AActor* CurrentTarget{ nullptr };
+	ISLDamageable* CurrentTarget{ nullptr };
 	for (AActor* var : OverlappingActors)
 	{
 		if (Cast<ISLDamageable>(var) && var != this)
@@ -300,17 +302,49 @@ void ASLGod::OnMeleePrefireTimerEnd()
 				FHitResult HitResult;
 				if (!GetWorld()->LineTraceSingleByChannel(HitResult, this->GetActorLocation(), var->GetActorLocation(), ECollisionChannel::ECC_GameTraceChannel1))
 				{
-					if (!bCleaveProgression[CurrentProgression])
-					{
-						ShortestDistance = FVector::Dist(this->GetActorLocation(), var->GetActorLocation());
-						CurrentTarget = var;
-					}
-					else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s"), *var->GetName()));
+					CurrentTarget = Cast<ISLDamageable>(var);
+					ShortestDistance = FVector::Dist(this->GetActorLocation(), var->GetActorLocation());
 				}
 			}
 		}
 	}
-	if (CurrentTarget) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s"), *CurrentTarget->GetName()));
+	if (CurrentTarget)
+	{
+		if (GetIsPhysicalDamage())
+		{
+			float TotalProtections = (CurrentTarget->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() > 0 ? (CurrentTarget->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() : 0;
+			CurrentTarget->SetCurrentHealth(((GetCurrentBasicAttackDamage() + GetPhysicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
+		}
+		else
+		{
+			float TotalProtections = (CurrentTarget->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() > 0 ? (CurrentTarget->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() : 0;
+			CurrentTarget->SetCurrentHealth(((GetCurrentBasicAttackDamage() + GetMagicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
+		}
+		if (bCleaveProgression[CurrentProgression])
+		{
+			for (AActor* var : OverlappingActors)
+			{
+				if (Cast<ISLDamageable>(var) && var != this && Cast<ISLDamageable>(var) != CurrentTarget)
+				{
+					FHitResult HitResult;
+					if (!GetWorld()->LineTraceSingleByChannel(HitResult, this->GetActorLocation(), var->GetActorLocation(), ECollisionChannel::ECC_GameTraceChannel1))
+					{
+						ISLDamageable* CleaveTarget = Cast<ISLDamageable>(var);
+						if (GetIsPhysicalDamage())
+						{
+							float TotalProtections = (CleaveTarget->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() > 0 ? (CleaveTarget->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() : 0;
+							CleaveTarget->SetCurrentHealth(((GetCurrentBasicAttackDamage() + GetPhysicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression] * CleaveDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
+						}
+						else
+						{
+							float TotalProtections = (CleaveTarget->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() > 0 ? (CleaveTarget->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() : 0;
+							CleaveTarget->SetCurrentHealth(((GetCurrentBasicAttackDamage() + GetMagicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression] * CleaveDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void ASLGod::FireMeleeBasicAttack()

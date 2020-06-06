@@ -39,9 +39,9 @@ protected:
 
 	float Shield{ 0 };
 
-	float PhysicalProtections{ 16 };
+	float PhysicalProtections{ 100 };
 
-	float MagicalProtections{ 31 };
+	float MagicalProtections{ 100 };
 
 	bool bHasBasicHealthBar{ false };
 

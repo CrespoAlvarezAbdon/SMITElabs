@@ -8,12 +8,14 @@
 #include "Components/ArrowComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/BoxComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "SLRangedBasicProjectile.generated.h"
 
 class USceneComponent;
 class UStaticMeshComponent;
 class USphereComponent;
+class UBoxComponent;
 class UArrowComponent;
 class UPrimitiveComponent;
 class AActor;
@@ -59,6 +61,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Collision")
 	USphereComponent* CleaveCollisionComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Collision")
+	UBoxComponent* WallCollisionComponent;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Arrow")
 	UArrowComponent* ArrowComponent;
 
@@ -88,6 +93,10 @@ protected:
 
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit);
+
+	UFUNCTION()
+	void OnWallHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
