@@ -18,6 +18,7 @@ class USphereComponent;
 class UBoxComponent;
 class UArrowComponent;
 class UPrimitiveComponent;
+class ISLDangerous;
 class AActor;
 class ASLGod;
 
@@ -32,7 +33,7 @@ public:
 
 	void SetBasicAttackDisjoints(TArray<float> Val);
 
-	void SetOrigin(ASLGod* Val);
+	void SetOrigin(ISLDangerous* Val);
 
 	void SetDamageProgressionMultiplier(float Val);
 
@@ -67,7 +68,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Arrow")
 	UArrowComponent* ArrowComponent;
 
-	AActor* Origin;
+	ISLDangerous* Origin;
 
 	FVector StartingLocation;
 

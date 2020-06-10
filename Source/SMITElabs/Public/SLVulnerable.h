@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "SLDamageable.generated.h"
+#include "SLVulnerable.generated.h"
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
-class USLDamageable : public UInterface
+class USLVulnerable : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -16,14 +16,14 @@ class USLDamageable : public UInterface
 /**
  * 
  */
-class SMITELABS_API ISLDamageable
+class SMITELABS_API ISLVulnerable
 {
 	GENERATED_BODY()
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	virtual void SetCurrentHealth(float Val, AActor* Origin);
+	virtual void TakeHealthDamage(float Val, AActor* Origin) PURE_VIRTUAL(ISLVulnerable::TakeHealthDamage);
 
 	virtual float GetPhysicalProtections();
 
@@ -42,6 +42,10 @@ protected:
 	float PhysicalProtections{ 100 };
 
 	float MagicalProtections{ 100 };
+
+	const float MaxProtection{ 325 };
+
+	const float MaxPenetration{ 50 };
 
 	bool bHasBasicHealthBar{ false };
 

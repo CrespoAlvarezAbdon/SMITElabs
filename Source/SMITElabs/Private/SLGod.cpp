@@ -42,8 +42,7 @@ ASLGod::ASLGod()
 	CharacterMovementComponent->GravityScale = 3;
 
 	BasicAttackTimerDelegate.BindUFunction(this, FName("NextBasicAttack"), false);
-	RangedPrefireTimerDelegate.BindUFunction(this, FName("OnRangedPrefireTimerEnd"), false);
-	MeleePrefireTimerDelegate.BindUFunction(this, FName("OnMeleePrefireTimerEnd"), false);
+	PrefireTimerDelegate.BindUFunction(this, FName("OnPrefireTimerEnd"), false);
 	JumpTimerDelegate.BindUFunction(this, FName("OnEndJump"), false);
 	ProgressionResetTimerDelegate.BindUFunction(this, FName("ResetProgression"), false);
 }
@@ -65,63 +64,6 @@ void ASLGod::BeginPlay()
 		ResetProgression();
 	}
 }
-
-void ASLGod::SetCurrentHealth(float Val, AActor* Origin)
-{
-	float OriginalHealth = CurrentHealth;
-	CurrentHealth -= Val;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s dealt %f damage to %s (%f -> %f)"), *Origin->GetName(), Val, *this->GetName(), OriginalHealth, CurrentHealth));
-	if (CurrentHealth <= 0)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s has been slain by %s!"), *this->GetName(), *Origin->GetName()));
-		Destroy();
-	}
-}
-
-void ASLGod::SetMovementSpeed(float Val)
-{
-	UndiminishedMovementSpeed = Val;
-	if (UndiminishedMovementSpeed >= MovementSpeedDiminishments[0])
-	{
-		if (UndiminishedMovementSpeed >= MovementSpeedDiminishments[1])
-		{
-			DiminishedMovementSpeed = MovementSpeedDiminishments[0] + (MovementSpeedDiminishments[1] - MovementSpeedDiminishments[0]) * MovementSpeedDiminishmentMultipliers[0] + (Val - MovementSpeedDiminishments[1]) * MovementSpeedDiminishmentMultipliers[1];
-		}
-		else
-		{
-			DiminishedMovementSpeed = MovementSpeedDiminishments[0] + (Val - MovementSpeedDiminishments[0]) * MovementSpeedDiminishmentMultipliers[0];
-		}
-	}
-	else if (UndiminishedMovementSpeed < MinimumMovementSpeed)
-	{
-		UndiminishedMovementSpeed = MinimumMovementSpeed;
-		DiminishedMovementSpeed = MinimumMovementSpeed;
-	}
-	else
-	{
-		DiminishedMovementSpeed = UndiminishedMovementSpeed;
-	}
-}
-
-void ASLGod::SetBasicAttackSpeed(float Val) { BasicAttackSpeed = Val; }
-
-float ASLGod::GetCurrentBasicAttackDamage() const { return CurrentBasicAttackDamage; }
-
-float ASLGod::GetPhysicalPower() const { return PhysicalPower; }
-
-float ASLGod::GetMagicalPower() const { return MagicalPower; }
-
-float ASLGod::GetFlatPhysicalPenetration() const { return FlatPhysicalPenetration; }
-
-float ASLGod::GetFlatMagicalPenetration() const { return FlatMagicalPenetration; }
-
-float ASLGod::GetPercentagePhysicalPenetration() const { return PercentagePhysicalPenetration; }
-
-float ASLGod::GetPercentageMagicalPenetration() const { return PercentageMagicalPenetration; }
-
-float ASLGod::GetBasicAttackPowerScaling() const { return BasicAttackPowerScaling; }
-
-bool ASLGod::GetIsPhysicalDamage() const { return bIsPhysicalDamage; }
 
 void ASLGod::LookUp(float Val)
 {
@@ -233,16 +175,16 @@ void ASLGod::BeginFireBasicAttack()
 			BasicAttackPenalty = BasicAttackRangedPenalty;
 			CurrentAimComponent = RangedAimComponent;
 			RangedAimComponent->SetMaterial(0, MTargeterWindup);
-			if (bHasScalingPrefireProgression[CurrentProgression] && BasicAttackRefireProgression[CurrentProgression] > BasicAttackRefireProgression[CurrentProgression] / BasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(RangedPrefireTimerHandle, RangedPrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * ((BasicAttackRefireProgression[CurrentProgression] / BasicAttackSpeed) / BasicAttackRefireProgression[CurrentProgression]), false);
-			else GetWorld()->GetTimerManager().SetTimer(RangedPrefireTimerHandle, RangedPrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression], false);
+			if (bHasScalingPrefireProgression[CurrentProgression] && BasicAttackRefireProgression[CurrentProgression] > BasicAttackRefireProgression[CurrentProgression] / BasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(PrefireTimerHandle, PrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * ((BasicAttackRefireProgression[CurrentProgression] / BasicAttackSpeed) / BasicAttackRefireProgression[CurrentProgression]), false);
+			else GetWorld()->GetTimerManager().SetTimer(PrefireTimerHandle, PrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression], false);
 		}
 		else
 		{
 			BasicAttackPenalty = BasicAttackMeleePenalty;
 			CurrentAimComponent = MeleeAimComponent;
 			MeleeAimComponent->SetMaterial(0, MTargeterWindup);
-			if (bHasScalingPrefireProgression[CurrentProgression] && BasicAttackPrefireProgression[CurrentProgression] < BasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(MeleePrefireTimerHandle, MeleePrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * BasicAttackPrefireProgression[CurrentProgression] / BasicAttackSpeed, false);
-			else GetWorld()->GetTimerManager().SetTimer(MeleePrefireTimerHandle, MeleePrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression], false);
+			if (bHasScalingPrefireProgression[CurrentProgression] && BasicAttackPrefireProgression[CurrentProgression] < BasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(PrefireTimerHandle, PrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * BasicAttackPrefireProgression[CurrentProgression] / BasicAttackSpeed, false);
+			else GetWorld()->GetTimerManager().SetTimer(PrefireTimerHandle, PrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression], false);
 		}
 	}
 	else if (bIsJumping)
@@ -261,9 +203,10 @@ void ASLGod::NextBasicAttack()
 	BeginFireBasicAttack();
 }
 
-void ASLGod::OnRangedPrefireTimerEnd()
+void ASLGod::OnPrefireTimerEnd()
 {
-	FireRangedBasicAttack();
+	if (bIsBasicAttackRangedProgression[CurrentProgression]) FireRangedBasicAttack();
+	else FireMeleeBasicAttack();
 }
 
 void ASLGod::FireRangedBasicAttack()
@@ -271,7 +214,7 @@ void ASLGod::FireRangedBasicAttack()
 	ASLRangedBasicProjectile* SpawnedRangedBasicProjectile = GetWorld()->SpawnActorDeferred<ASLRangedBasicProjectile>(RangedBasicProjectile, GetTransform());
 	TArray<float> BasicAttackDisjoints{ BasicAttackDisjointProgression[CurrentProgression * 2], BasicAttackDisjointProgression[CurrentProgression * 2 + 1] };
 	SpawnedRangedBasicProjectile->SetBasicAttackDisjoints(BasicAttackDisjoints);
-	SpawnedRangedBasicProjectile->SetOrigin(this);
+	SpawnedRangedBasicProjectile->SetOrigin(Cast<ISLDangerous>(this));
 	SpawnedRangedBasicProjectile->SetDamageProgressionMultiplier(BasicAttackDamageProgression[CurrentProgression]);
 	SpawnedRangedBasicProjectile->SetProjectileSpeed(RangedBasicAttackProjectileSpeedProgression[CurrentProgression]);
 	SpawnedRangedBasicProjectile->SetProjectileRange(BasicAttackRangeProgression[CurrentProgression]);
@@ -292,17 +235,17 @@ void ASLGod::OnMeleePrefireTimerEnd()
 	TArray<AActor*> OverlappingActors;
 	MeleeAimComponent->GetOverlappingActors(OverlappingActors);
 	float ShortestDistance{ -1 };
-	ISLDamageable* CurrentTarget{ nullptr };
+	ISLVulnerable* CurrentTarget{ nullptr };
 	for (AActor* var : OverlappingActors)
 	{
-		if (Cast<ISLDamageable>(var) && var != this)
+		if (Cast<ISLVulnerable>(var) && var != this)
 		{
 			if (FVector::Dist(this->GetActorLocation(), var->GetActorLocation()) < ShortestDistance || ShortestDistance == -1)
 			{
 				FHitResult HitResult;
 				if (!GetWorld()->LineTraceSingleByChannel(HitResult, this->GetActorLocation(), var->GetActorLocation(), ECollisionChannel::ECC_GameTraceChannel1))
 				{
-					CurrentTarget = Cast<ISLDamageable>(var);
+					CurrentTarget = Cast<ISLVulnerable>(var);
 					ShortestDistance = FVector::Dist(this->GetActorLocation(), var->GetActorLocation());
 				}
 			}
@@ -313,32 +256,32 @@ void ASLGod::OnMeleePrefireTimerEnd()
 		if (GetIsPhysicalDamage())
 		{
 			float TotalProtections = (CurrentTarget->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() > 0 ? (CurrentTarget->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() : 0;
-			CurrentTarget->SetCurrentHealth(((GetCurrentBasicAttackDamage() + GetPhysicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
+			CurrentTarget->TakeHealthDamage(((GetCurrentBasicAttackDamage() + GetPhysicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
 		}
 		else
 		{
 			float TotalProtections = (CurrentTarget->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() > 0 ? (CurrentTarget->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() : 0;
-			CurrentTarget->SetCurrentHealth(((GetCurrentBasicAttackDamage() + GetMagicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
+			CurrentTarget->TakeHealthDamage(((GetCurrentBasicAttackDamage() + GetMagicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
 		}
 		if (bCleaveProgression[CurrentProgression])
 		{
 			for (AActor* var : OverlappingActors)
 			{
-				if (Cast<ISLDamageable>(var) && var != this && Cast<ISLDamageable>(var) != CurrentTarget)
+				if (Cast<ISLVulnerable>(var) && var != this && Cast<ISLVulnerable>(var) != CurrentTarget)
 				{
 					FHitResult HitResult;
 					if (!GetWorld()->LineTraceSingleByChannel(HitResult, this->GetActorLocation(), var->GetActorLocation(), ECollisionChannel::ECC_GameTraceChannel1))
 					{
-						ISLDamageable* CleaveTarget = Cast<ISLDamageable>(var);
+						ISLVulnerable* CleaveTarget = Cast<ISLVulnerable>(var);
 						if (GetIsPhysicalDamage())
 						{
 							float TotalProtections = (CleaveTarget->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() > 0 ? (CleaveTarget->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() : 0;
-							CleaveTarget->SetCurrentHealth(((GetCurrentBasicAttackDamage() + GetPhysicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression] * CleaveDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
+							CleaveTarget->TakeHealthDamage(((GetCurrentBasicAttackDamage() + GetPhysicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression] * CleaveDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
 						}
 						else
 						{
 							float TotalProtections = (CleaveTarget->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() > 0 ? (CleaveTarget->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() : 0;
-							CleaveTarget->SetCurrentHealth(((GetCurrentBasicAttackDamage() + GetMagicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression] * CleaveDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
+							CleaveTarget->TakeHealthDamage(((GetCurrentBasicAttackDamage() + GetMagicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression] * CleaveDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
 						}
 					}
 				}
@@ -411,6 +354,18 @@ void ASLGod::ChangeBasicAttackTargeter()
 			CurrentAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[0], BasicAttackRangeProgression[0], .025));
 			CurrentAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[0], BasicAttackDisjointProgression[1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 2.5));
 		}
+	}
+}
+
+void ASLGod::TakeHealthDamage(float Val, AActor* Origin)
+{
+	float OriginalHealth = CurrentHealth;
+	CurrentHealth -= Val;
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s dealt %f damage to %s (%f -> %f)"), *Origin->GetName(), Val, *this->GetName(), OriginalHealth, CurrentHealth));
+	if (CurrentHealth <= 0)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s has been slain by %s!"), *this->GetName(), *Origin->GetName()));
+		Destroy();
 	}
 }
 

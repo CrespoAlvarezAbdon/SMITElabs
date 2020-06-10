@@ -5,7 +5,6 @@
 
 ASLTestGod::ASLTestGod()
 {
-
 	BaseMovementSpeed = 594;
 	BaseBasicAttackDamage = 50;
 	CurrentBasicAttackDamage = BaseBasicAttackDamage;
