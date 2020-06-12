@@ -57,7 +57,7 @@ protected:
 
 	float BaseBasicAttackDamage{ 43 };
 
-	float CurrentBasicAttackDamage{ 0 };
+	float CurrentBasicAttackDamage{ BaseBasicAttackDamage };
 
 	float BasicAttackPowerScaling{ 1 };
 

@@ -227,20 +227,20 @@ void ASLGod::FireRangedBasicAttack()
 	CurrentAimComponent->SetMaterial(0, MTargeterFiring);
 }
 
-void ASLGod::OnMeleePrefireTimerEnd()
+void ASLGod::FireMeleeBasicAttack()
 {
 	// I know there's a cleaner and more efficient way of doing this since I'm current doing the check twice, but it will do for now, will do something about the repeating damage code later
 
-	FireMeleeBasicAttack();
 	TArray<AActor*> OverlappingActors;
 	MeleeAimComponent->GetOverlappingActors(OverlappingActors);
 	float ShortestDistance{ -1 };
 	ISLVulnerable* CurrentTarget{ nullptr };
 	for (AActor* var : OverlappingActors)
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s"), *var->GetName()));
 		if (Cast<ISLVulnerable>(var) && var != this)
 		{
-			if (FVector::Dist(this->GetActorLocation(), var->GetActorLocation()) < ShortestDistance || ShortestDistance == -1)
+			if (FVector::Dist2D(this->GetActorLocation(), var->GetActorLocation()) < ShortestDistance || ShortestDistance == -1)
 			{
 				FHitResult HitResult;
 				if (!GetWorld()->LineTraceSingleByChannel(HitResult, this->GetActorLocation(), var->GetActorLocation(), ECollisionChannel::ECC_GameTraceChannel1))
@@ -248,6 +248,7 @@ void ASLGod::OnMeleePrefireTimerEnd()
 					CurrentTarget = Cast<ISLVulnerable>(var);
 					ShortestDistance = FVector::Dist(this->GetActorLocation(), var->GetActorLocation());
 				}
+				else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("%s"), *HitResult.Actor->GetName()));
 			}
 		}
 	}
@@ -288,11 +289,6 @@ void ASLGod::OnMeleePrefireTimerEnd()
 			}
 		}
 	}
-}
-
-void ASLGod::FireMeleeBasicAttack()
-{
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("BANG!"));
 	ChangeBasicAttackTargeter();
 	CurrentAimComponent->SetMaterial(0, MTargeterFiring);
 }
@@ -357,14 +353,14 @@ void ASLGod::ChangeBasicAttackTargeter()
 	}
 }
 
-void ASLGod::TakeHealthDamage(float Val, AActor* Origin)
+void ASLGod::TakeHealthDamage(float Val, ISLDangerous* Origin)
 {
-	float OriginalHealth = CurrentHealth;
-	CurrentHealth -= Val;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s dealt %f damage to %s (%f -> %f)"), *Origin->GetName(), Val, *this->GetName(), OriginalHealth, CurrentHealth));
+	float OriginalHealth = Val;
+	ISLVulnerable::TakeHealthDamage(Val, Origin);
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s dealt %f damage to %s (%f -> %f)"), *Cast<AActor>(Origin)->GetName(), Val, *this->GetName(), OriginalHealth, CurrentHealth));
 	if (CurrentHealth <= 0)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s has been slain by %s!"), *this->GetName(), *Origin->GetName()));
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s has been slain by %s!"), *this->GetName(), *Cast<AActor>(Origin)->GetName()));
 		Destroy();
 	}
 }

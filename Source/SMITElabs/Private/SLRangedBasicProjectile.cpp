@@ -66,12 +66,12 @@ void ASLRangedBasicProjectile::OnOverlapBegin(UPrimitiveComponent* OverlappedCom
 		if (Origin->GetIsPhysicalDamage())
 		{
 			float TotalProtections = (DamagedTarget->GetPhysicalProtections()) * (1 - Origin->GetPercentagePhysicalPenetration()) - Origin->GetFlatPhysicalPenetration() > 0 ? (DamagedTarget->GetPhysicalProtections()) * (1 - Origin->GetPercentagePhysicalPenetration()) - Origin->GetFlatPhysicalPenetration() : 0;
-			DamagedTarget->TakeHealthDamage(((Origin->GetCurrentBasicAttackDamage() + Origin->GetPhysicalPower() * Origin->GetBasicAttackPowerScaling()) * DamageProgressionMultiplier) * (100 / (TotalProtections + 100)), Cast<AActor>(Origin));
+			DamagedTarget->TakeHealthDamage(((Origin->GetCurrentBasicAttackDamage() + Origin->GetPhysicalPower() * Origin->GetBasicAttackPowerScaling()) * DamageProgressionMultiplier) * (100 / (TotalProtections + 100)), Origin);
 		}
 		else
 		{
 			float TotalProtections = (DamagedTarget->GetMagicalProtections()) * (1 - Origin->GetPercentageMagicalPenetration()) - Origin->GetFlatMagicalPenetration() > 0 ? (DamagedTarget->GetMagicalProtections()) * (1 - Origin->GetPercentageMagicalPenetration()) - Origin->GetFlatMagicalPenetration() : 0;
-			DamagedTarget->TakeHealthDamage(((Origin->GetCurrentBasicAttackDamage() + Origin->GetMagicalPower() * Origin->GetBasicAttackPowerScaling()) * DamageProgressionMultiplier) * (100 / (TotalProtections + 100)), Cast<AActor>(Origin));
+			DamagedTarget->TakeHealthDamage(((Origin->GetCurrentBasicAttackDamage() + Origin->GetMagicalPower() * Origin->GetBasicAttackPowerScaling()) * DamageProgressionMultiplier) * (100 / (TotalProtections + 100)), Origin);
 		}
 		if (bCleave)
 		{
@@ -89,12 +89,12 @@ void ASLRangedBasicProjectile::OnOverlapBegin(UPrimitiveComponent* OverlappedCom
 						if (Origin->GetIsPhysicalDamage())
 						{
 							float TotalProtections = (DamagedTarget->GetPhysicalProtections()) * (1 - Origin->GetPercentagePhysicalPenetration()) - Origin->GetFlatPhysicalPenetration() > 0 ? (DamagedTarget->GetPhysicalProtections()) * (1 - Origin->GetPercentagePhysicalPenetration()) - Origin->GetFlatPhysicalPenetration() : 0;
-							DamagedTarget->TakeHealthDamage(((Origin->GetCurrentBasicAttackDamage() + Origin->GetPhysicalPower() * Origin->GetBasicAttackPowerScaling()) * DamageProgressionMultiplier * CleaveDamage) * (100 / (TotalProtections + 100)), Cast<AActor>(Origin));
+							DamagedTarget->TakeHealthDamage(((Origin->GetCurrentBasicAttackDamage() + Origin->GetPhysicalPower() * Origin->GetBasicAttackPowerScaling()) * DamageProgressionMultiplier * CleaveDamage) * (100 / (TotalProtections + 100)), Origin);
 						}
 						else
 						{
 							float TotalProtections = (DamagedTarget->GetMagicalProtections()) * (1 - Origin->GetPercentageMagicalPenetration()) - Origin->GetFlatMagicalPenetration() > 0 ? (DamagedTarget->GetMagicalProtections()) * (1 - Origin->GetPercentageMagicalPenetration()) - Origin->GetFlatMagicalPenetration() : 0;
-							DamagedTarget->TakeHealthDamage(((Origin->GetCurrentBasicAttackDamage() + Origin->GetMagicalPower() * Origin->GetBasicAttackPowerScaling()) * DamageProgressionMultiplier * CleaveDamage) * (100 / (TotalProtections + 100)), Cast<AActor>(Origin));
+							DamagedTarget->TakeHealthDamage(((Origin->GetCurrentBasicAttackDamage() + Origin->GetMagicalPower() * Origin->GetBasicAttackPowerScaling()) * DamageProgressionMultiplier * CleaveDamage) * (100 / (TotalProtections + 100)), Origin);
 						}
 					}
 				}
@@ -114,6 +114,12 @@ void ASLRangedBasicProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//Check if the projectile will match or exceed the max distance on the next frame. If so, set it at the max distance and destroy it.
+	//NOTE: This was done before I discovered the magic of UProjectileMovementComponent :/
+	if (FVector::Dist(StartingLocation, GetActorLocation() + SceneComponent->GetForwardVector() * ProjectileSpeed * 100 * DeltaTime) >= (ProjectileRange - ProjectileLength / 2) * 100)
+	{
+		SetActorLocation(StartingLocation + SceneComponent->GetForwardVector() * (ProjectileRange - ProjectileLength / 2) * 100);
+		Destroy();
+	}
 	SetActorLocation(GetActorLocation() + SceneComponent->GetForwardVector() * ProjectileSpeed * 100 * DeltaTime);
-	if (FVector::Dist(StartingLocation, GetActorLocation()) >= (ProjectileRange - ProjectileLength/2) * 100) Destroy();
 }

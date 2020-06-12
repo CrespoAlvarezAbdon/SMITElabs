@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "SMITElabs/Public/SLDangerous.h"
 #include "SLVulnerable.generated.h"
 
 // This class does not need to be modified.
@@ -23,7 +24,7 @@ class SMITELABS_API ISLVulnerable
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	virtual void TakeHealthDamage(float Val, AActor* Origin) PURE_VIRTUAL(ISLVulnerable::TakeHealthDamage);
+	virtual void TakeHealthDamage(float Val, ISLDangerous* Origin);
 
 	virtual float GetPhysicalProtections();
 

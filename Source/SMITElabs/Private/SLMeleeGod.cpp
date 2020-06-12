@@ -1,10 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "SLTestGod.h"
+#include "SLMeleeGod.h"
 
-ASLTestGod::ASLTestGod()
+ASLMeleeGod::ASLMeleeGod()
 {
+	bIsBasicAttackRangedProgression = { false, false, false };
+	BasicAttackDisjointProgression = { 0, 0, 0, 0, 0, 0 };
+	BasicAttackRangeProgression = { 20, 30, 40 };
 	BaseMovementSpeed = 594;
 	BaseBasicAttackDamage = 50;
 	CurrentBasicAttackDamage = BaseBasicAttackDamage;

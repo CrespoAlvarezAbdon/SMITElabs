@@ -79,8 +79,6 @@ public:
 	void FireRangedBasicAttack();
 
 	UFUNCTION()
-	void OnMeleePrefireTimerEnd();
-
 	void FireMeleeBasicAttack();
 
 	UFUNCTION()
@@ -88,7 +86,7 @@ public:
 
 	void ChangeBasicAttackTargeter();
 
-	virtual void TakeHealthDamage(float Val, AActor* Origin) override;
+	virtual void TakeHealthDamage(float Val, ISLDangerous* Origin) override;
 
 protected:
 	// Called when the game starts or when spawned
