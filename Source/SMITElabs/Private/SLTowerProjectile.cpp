@@ -17,8 +17,8 @@ ASLTowerProjectile::ASLTowerProjectile()
 	StaticMeshComponent->SetupAttachment(RootComponent);
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 
-	ProjectileMovementComponent->InitialSpeed = 5000;
-	ProjectileMovementComponent->MaxSpeed = 5000;
+	ProjectileMovementComponent->InitialSpeed = 7500;
+	ProjectileMovementComponent->MaxSpeed = 7500;
 	ProjectileMovementComponent->ProjectileGravityScale = 0;
 	ProjectileMovementComponent->bIsHomingProjectile = true;
 	ProjectileMovementComponent->HomingAccelerationMagnitude = 1000000;

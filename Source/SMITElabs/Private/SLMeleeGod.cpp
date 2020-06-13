@@ -7,9 +7,9 @@ ASLMeleeGod::ASLMeleeGod()
 {
 	bIsBasicAttackRangedProgression = { false, false, false };
 	BasicAttackDisjointProgression = { 0, 0, 0, 0, 0, 0 };
-	BasicAttackRangeProgression = { 20, 30, 40 };
+	BasicAttackRangeProgression = { 12, 12, 18 };
 	BaseMovementSpeed = 594;
-	BaseBasicAttackDamage = 50;
+	BaseBasicAttackDamage = 400;
 	CurrentBasicAttackDamage = BaseBasicAttackDamage;
 	BasicAttackSpeed = 1;
 	CurrentHealth = 2500;

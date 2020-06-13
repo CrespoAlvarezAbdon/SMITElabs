@@ -53,17 +53,33 @@ protected:
 	float TowerDamageMultiplier{ 1 };
 	float TowerDamageMultiplierIncrement{ 0.2 };
 
+	float TowerHealthPerSecond{ 8 };
+
+	float TowerMaxRegenHealth{ 0 };
+
+	bool bHasShaft{ true };
+
+	bool bHasTowerHPS{ false };
+
 	ISLVulnerable* CurrentTarget{ nullptr };
 
 	ISLVulnerable* PriorityTarget{ nullptr };
 
 	ISLVulnerable* PreviousTarget{ nullptr };
 
+	ASLTowerProjectile* SpawnedTowerProjectile;
+
 	FTimerHandle FireTowerShotTimerHandle;
+
+	FTimerDelegate PrepareTowerShotTimerDelegate;
 
 	FTimerDelegate FireTowerShotTimerDelegate;
 
 	FTimerDelegate BeginPlayTimerDelegate;
+
+	FTimerHandle TowerHealthRegenTimerHandle;
+
+	FTimerDelegate TowerHealthRegenTimerDelegate;
 
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit);
@@ -77,7 +93,13 @@ protected:
 	void InitialSearchForTarget();
 
 	UFUNCTION()
+	void PrepareTowerShot();
+
+	UFUNCTION()
 	void FireTowerShot();
+
+	UFUNCTION()
+	void HealTower();
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

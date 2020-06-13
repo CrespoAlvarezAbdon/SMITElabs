@@ -102,7 +102,6 @@ void ASLGod::MoveForward(float Val)
 		}
 		else Val = Val * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
 		AddMovementInput(StaticMeshComponent->GetForwardVector(), Val);
-		//GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s"), *GetVelocity().ToString()));
 	}
 }
 
@@ -118,7 +117,6 @@ void ASLGod::MoveRight(float Val)
 		}
 		else Val = Val * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
 		AddMovementInput(StaticMeshComponent->GetRightVector(), Val);
-		//GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s"), *GetVelocity().ToString()));
 
 	}
 }
@@ -131,7 +129,6 @@ void ASLGod::MoveDiagonally(int ValX, int ValY)
 	FVector Vec = FVector(StaticMeshComponent->GetForwardVector() * ValX + StaticMeshComponent->GetRightVector() * ValY);
 	Vec.Normalize();
 	AddMovementInput(Vec, Val);
-	//GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s"), *GetVelocity().ToString()));
 }
 
 void ASLGod::OnBeginJump()
@@ -355,7 +352,7 @@ void ASLGod::ChangeBasicAttackTargeter()
 
 void ASLGod::TakeHealthDamage(float Val, ISLDangerous* Origin)
 {
-	float OriginalHealth = Val;
+	float OriginalHealth = CurrentHealth;
 	ISLVulnerable::TakeHealthDamage(Val, Origin);
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s dealt %f damage to %s (%f -> %f)"), *Cast<AActor>(Origin)->GetName(), Val, *this->GetName(), OriginalHealth, CurrentHealth));
 	if (CurrentHealth <= 0)
