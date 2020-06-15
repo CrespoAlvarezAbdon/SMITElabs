@@ -40,5 +40,4 @@ protected:
 	const float MinimumMovementSpeed{ 150 };
 
 	const float MaximumDiminishedMovementSpeed{ 753.55 };
-
 };

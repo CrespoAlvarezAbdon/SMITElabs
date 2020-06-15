@@ -49,8 +49,6 @@ protected:
 
 	bool bIsBasicAttacking{ false };
 
-	bool bIsJumping{ false };
-
 	bool bFatalis{ false };
 
 	float BasicAttackPenalty{ 1 };

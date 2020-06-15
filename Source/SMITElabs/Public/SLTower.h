@@ -61,6 +61,9 @@ protected:
 
 	bool bHasTowerHPS{ false };
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BP Variables")
+	bool bIsOrderBP{ true };
+
 	ISLVulnerable* CurrentTarget{ nullptr };
 
 	ISLVulnerable* PriorityTarget{ nullptr };

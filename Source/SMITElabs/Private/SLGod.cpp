@@ -22,6 +22,10 @@ ASLGod::ASLGod()
 	MeleeAimComponent->SetupAttachment(RootComponent);
 	MeleeAimComponent->SetHiddenInGame(true);
 
+	AbilityAimComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("AbilityAimComponent"));
+	AbilityAimComponent->SetupAttachment(RootComponent);
+	AbilityAimComponent->SetHiddenInGame(true);
+
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
 	SpringArmComponent->SetupAttachment(RootComponent);
 	SpringArmComponent->bUsePawnControlRotation = true;
@@ -52,14 +56,22 @@ void ASLGod::BeginPlay()
 {
 	Super::BeginPlay();
 
+	bIsOrder = bIsOrderBP;
+
 	SetMovementSpeed(BaseMovementSpeed);
 	CurrentBasicAttackDamage = BaseBasicAttackDamage;
 	
 	if (this == UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
 	{
+		PlayerController->SetControlRotation(FRotator(-35, 0, 0));
+
 		RangeLineComponent->SetHiddenInGame(false);
 		RangeLineComponent->SetRelativeLocation(FVector(0, 0, (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2));
 		RangeLineComponent->SetRelativeScale3D(FVector(70, .5, .05));
+
+		AbilityAimComponent->SetHiddenInGame(false);
+		AbilityAimComponent->SetRelativeLocation(FVector(3700, 0, (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2));
+		AbilityAimComponent->SetRelativeScale3D(FVector(4, 4, .1));
 		
 		ResetProgression();
 	}
@@ -68,6 +80,30 @@ void ASLGod::BeginPlay()
 void ASLGod::LookUp(float Val)
 {
 	AddControllerPitchInput(-Val);
+
+	//Old test code used to determine the Ability Aim Targeter position using the camera pitch, changed to use a raycast from the camera instead to match the game.
+	/*
+	if (PlayerController->GetControlRotation().Pitch >= UGameplayStatics::GetPlayerCameraManager(this, 0)->ViewPitchMin)
+	{
+		float AbilityAimComponentPosition{ 0 };
+		if (PlayerController->GetControlRotation().Pitch <= UGameplayStatics::GetPlayerCameraManager(this, 0)->ViewPitchMin + 60)
+		{
+			AbilityAimComponentPosition = (PlayerController->GetControlRotation().Pitch - UGameplayStatics::GetPlayerCameraManager(this, 0)->ViewPitchMin) / 60 * 6400 + 600;
+		}
+		else
+		{
+			AbilityAimComponentPosition = 7000;
+		}
+		AbilityAimComponent->SetRelativeLocation(FVector(AbilityAimComponentPosition, 0, AbilityAimComponent->GetRelativeLocation().Z));
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s"), *PlayerController->GetControlRotation().ToString()));
+	}
+	*/
+	FHitResult HitResult;
+	GetWorld()->LineTraceSingleByChannel(HitResult, CameraComponent->GetComponentLocation(), CameraComponent->GetComponentLocation() + PlayerController->GetControlRotation().Vector() * 100000, ECollisionChannel::ECC_GameTraceChannel2);
+
+	AbilityAimComponent->SetWorldLocation(FVector(HitResult.ImpactPoint.X, HitResult.ImpactPoint.Y, HitResult.ImpactPoint.Z + 5));
+	if (AbilityAimComponent->GetRelativeLocation().X > 7000 || HitResult.ImpactPoint == FVector::ZeroVector) AbilityAimComponent->SetRelativeLocation(FVector(7000, 0, AbilityAimComponent->GetRelativeLocation().Z));
+	AbilityAimComponent->SetRelativeScale3D(FVector(AbilityAimComponent->GetRelativeLocation().X / (7000 / 4) + 4, AbilityAimComponent->GetRelativeLocation().X / (7000 / 4) + 4, AbilityAimComponent->GetRelativeScale3D().Z));
 }
 
 void ASLGod::TurnRight(float Val)
@@ -137,7 +173,7 @@ void ASLGod::OnBeginJump()
 	{
 		Jump();
 		bIsJumping = true;
-		GetWorld()->GetTimerManager().SetTimer(JumpTimerHandle, JumpTimerDelegate, 1, false);
+		if (!GetWorld()->GetTimerManager().IsTimerActive(JumpTimerHandle)) GetWorld()->GetTimerManager().SetTimer(JumpTimerHandle, JumpTimerDelegate, 1, false);
 	}
 }
 

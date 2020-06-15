@@ -105,6 +105,9 @@ protected:
 	UStaticMeshComponent* MeleeAimComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
+	UStaticMeshComponent* AbilityAimComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
 	UCameraComponent* CameraComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Camera")
@@ -124,6 +127,9 @@ protected:
 
 	UStaticMeshComponent* CurrentAimComponent;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BP Variables")
+	bool bIsOrderBP{ true };
+
 	APlayerController* PlayerController;
 	UCharacterMovementComponent* CharacterMovementComponent;
 
@@ -136,6 +142,8 @@ protected:
 	FTimerHandle PrefireTimerHandle;
 
 	FTimerDelegate PrefireTimerDelegate;
+
+	bool bIsJumping{ false };
 
 	FTimerHandle JumpTimerHandle;
 

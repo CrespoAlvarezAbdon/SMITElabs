@@ -41,6 +41,7 @@ ASLTower::ASLTower()
 	PhysicalProtections = 125;
 	MagicalProtections = 125;
 	if (!bHasShaft) { TowerShaftComponent->ToggleVisibility(false); TowerHeadComponent->SetRelativeLocation(FVector(TowerHeadComponent->GetRelativeLocation().X, TowerHeadComponent->GetRelativeLocation().Y, TowerHeadComponent->GetRelativeLocation().Z - 1250)); }
+	bIsOrder = bIsOrderBP;
 }
 
 void ASLTower::TakeHealthDamage(float Val, ISLDangerous* Origin)
@@ -92,7 +93,7 @@ void ASLTower::SearchForTarget(bool bSetTimer)
 		float ShortestDistance{ -1 };
 		for (AActor* var : OverlappingActors)
 		{
-			if (Cast<ISLVulnerable>(var) && var != this)
+			if (Cast<ISLVulnerable>(var) && var != this && Cast<ISLIdentifiable>(var)->GetBIsOrder() != bIsOrder)
 			{
 				if (FVector::Dist2D(this->GetActorLocation(), var->GetActorLocation()) < ShortestDistance || ShortestDistance == -1)
 				{

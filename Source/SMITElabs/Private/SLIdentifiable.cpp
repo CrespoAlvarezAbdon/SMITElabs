@@ -4,3 +4,5 @@
 #include "SLIdentifiable.h"
 
 // Add default functionality here for any ISLIdentifiable functions that are not pure virtual.
+
+bool ISLIdentifiable::GetBIsOrder() { return bIsOrder; }
