@@ -59,8 +59,9 @@ void ASLRangedBasicProjectile::SetCleaveRange(float Val) { CleaveRange = Val; Cl
 
 void ASLRangedBasicProjectile::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit)
 {
+	// TODO Clean up this ugly if/else if
 	if (!OtherActor->Implements<USLVulnerable>() || Cast<ASLRangedBasicProjectile>(OtherActor)) return;
-	else if (OtherActor != Cast<AActor>(Origin))
+	else if (OtherActor != Cast<AActor>(Origin) && Cast<ISLIdentifiable>(Origin)->GetBIsOrder() != Cast<ISLIdentifiable>(OtherActor)->GetBIsOrder())
 	{
 		ISLVulnerable* DamagedTarget = Cast<ISLVulnerable>(OtherActor);
 		if (Origin->GetIsPhysicalDamage())
@@ -106,7 +107,7 @@ void ASLRangedBasicProjectile::OnOverlapBegin(UPrimitiveComponent* OverlappedCom
 
 void ASLRangedBasicProjectile::OnWallHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit)
 {
-	if (!OtherActor->Implements<USLVulnerable>() && OtherActor != this) { Destroy(); return; }
+	if (!OtherActor->Implements<USLVulnerable>() && OtherActor != this) Destroy();
 }
 
 // Called every frame

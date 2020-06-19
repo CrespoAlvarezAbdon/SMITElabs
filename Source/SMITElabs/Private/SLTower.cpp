@@ -41,7 +41,6 @@ ASLTower::ASLTower()
 	PhysicalProtections = 125;
 	MagicalProtections = 125;
 	if (!bHasShaft) { TowerShaftComponent->ToggleVisibility(false); TowerHeadComponent->SetRelativeLocation(FVector(TowerHeadComponent->GetRelativeLocation().X, TowerHeadComponent->GetRelativeLocation().Y, TowerHeadComponent->GetRelativeLocation().Z - 1250)); }
-	bIsOrder = bIsOrderBP;
 }
 
 void ASLTower::TakeHealthDamage(float Val, ISLDangerous* Origin)
@@ -62,6 +61,8 @@ void ASLTower::TakeHealthDamage(float Val, ISLDangerous* Origin)
 void ASLTower::BeginPlay()
 {
 	Super::BeginPlay();
+
+	bIsOrder = bIsOrderBP;
 
 	GetWorld()->GetTimerManager().SetTimer(FireTowerShotTimerHandle, BeginPlayTimerDelegate, .1, false);
 	if (bHasTowerHPS) GetWorld()->GetTimerManager().SetTimer(TowerHealthRegenTimerHandle, TowerHealthRegenTimerDelegate, 1, false);

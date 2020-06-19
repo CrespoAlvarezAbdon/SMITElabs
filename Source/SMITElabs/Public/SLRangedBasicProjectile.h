@@ -19,6 +19,7 @@ class UBoxComponent;
 class UArrowComponent;
 class UPrimitiveComponent;
 class ISLDangerous;
+class ISLIdentifiable;
 class AActor;
 class ASLGod;
 
