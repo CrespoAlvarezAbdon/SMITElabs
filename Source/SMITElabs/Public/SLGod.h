@@ -49,6 +49,36 @@ public:
 	// Sets default values for this character's properties
 	ASLGod();
 
+	virtual bool GetBIsOrder() const override;
+
+	virtual float GetPhysicalProtections() const override;
+
+	virtual float GetMagicalProtections() const override;
+
+	virtual void SetMovementSpeed(float Val) override;
+
+	virtual void SetBasicAttackSpeed(float Val) override;
+
+	virtual float GetCurrentBasicAttackDamage() const override;
+
+	virtual float GetPhysicalPower() const override;
+
+	virtual float GetMagicalPower() const override;
+
+	virtual float GetFlatPhysicalPenetration() const override;
+
+	virtual float GetFlatMagicalPenetration() const override;
+
+	virtual float GetPercentagePhysicalPenetration() const override;
+
+	virtual float GetPercentageMagicalPenetration() const override;
+
+	virtual float GetBasicAttackPowerScaling() const override;
+
+	virtual bool GetIsPhysicalDamage() const override;
+
+	virtual float CalculateTotalProtections(ISLVulnerable* Targeted) const override;
+
 	void LookUp(float Val);
 
 	void TurnRight(float Val);
@@ -58,6 +88,14 @@ public:
 	void MoveRight(float Val);
 
 	void MoveDiagonally(int ValX, int ValY);
+
+	void UseAbility1();
+
+	void UseAbility2();
+
+	void UseAbility3();
+
+	void UseAbility4();
 
 	void OnBeginJump();
 
@@ -83,6 +121,9 @@ public:
 
 	UFUNCTION()
 	void ResetProgression();
+
+	UFUNCTION()
+	void FinishResetProgression();
 
 	void ChangeBasicAttackTargeter();
 
@@ -125,15 +166,23 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Material")
 	UMaterial* MTargeterFiring;
 
-	UStaticMeshComponent* CurrentAimComponent;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Material")
+	UMaterial* MTargeterReset;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BP Variables")
-	bool bIsOrderBP{ true };
+	UStaticMeshComponent* CurrentAimComponent;
 
 	APlayerController* PlayerController;
 	UCharacterMovementComponent* CharacterMovementComponent;
 
 	FColor ConsoleColor{ FColor::Green };
+
+	FTimerHandle Ability1CooldownTimerHandle;
+
+	FTimerHandle Ability2CooldownTimerHandle;
+
+	FTimerHandle Ability3CooldownTimerHandle;
+
+	FTimerHandle Ability4CooldownTimerHandle;
 
 	FTimerHandle BasicAttackTimerHandle;
 
@@ -143,15 +192,214 @@ protected:
 
 	FTimerDelegate PrefireTimerDelegate;
 
-	bool bIsJumping{ false };
+	FTimerHandle ProgressionResetTimerHandle;
+
+	FTimerDelegate ProgressionResetTimerDelegate;
+
+	FTimerHandle FinishProgressionResetTimerHandle;
+
+	FTimerDelegate FinishProgressionResetTimerDelegate;
 
 	FTimerHandle JumpTimerHandle;
 
 	FTimerDelegate JumpTimerDelegate;
 
-	FTimerHandle ProgressionResetTimerHandle;
+#pragma region Offense
 
-	FTimerDelegate ProgressionResetTimerDelegate;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
+	float BasicAttackSpeed{ 1 };
+
+	bool bIsBasicAttacking{ false };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
+	bool bFatalis{ false };
+
+	float BasicAttackPenalty{ 1 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
+	float BaseBasicAttackDamage{ 43 };
+
+	float CurrentBasicAttackDamage{ BaseBasicAttackDamage };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
+	float BasicAttackPowerScaling{ 1 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
+	float BasicAttackRangedPenalty{ 0.5 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
+	float BasicAttackMeleePenalty{ 0.65 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Power")
+	float PhysicalPower{ 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Power")
+	float MagicalPower{ 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Power")
+	bool bIsPhysicalDamage{ true };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Penetration")
+	float FlatPhysicalPenetration{ 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Penetration")
+	float FlatMagicalPenetration{ 0 };
+
+	const float MaxFlatPenetration{ 50 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Penetration")
+	float PercentagePhysicalPenetration{ 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Penetration")
+	float PercentageMagicalPenetration{ 0 };
+
+	const float MaxPercentagePenetration{ .4 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
+	TArray<float> BasicAttackRefireProgression{ 0.5, 1, 1 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
+	TArray<float> BasicAttackPrefireProgression{ 0.25, 0.25, 0.5 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
+	TArray<float> BasicAttackRangeProgression{ 55, 55, 55 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
+	TArray<float> BasicAttackDamageProgression{ BasicAttackRefireProgression };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
+	TArray<float> BasicAttackDisjointProgression{ 306.25, 0, 306.25, 0, 306.25, 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
+	TArray<float> RangedBasicAttackProjectileSizeProgression{ 3, 3, 3 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
+	TArray<float> RangedBasicAttackProjectileSpeedProgression{ 110, 110, 110 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
+	TArray<bool> bCleaveProgression{ false, false, false };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
+	TArray<float> CleaveDamageProgression{ 1, 1, 1 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
+	TArray<float> RangedCleaveRangeProgression{ 7.5, 7.5, 7.5 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
+	TArray<bool> bIsBasicAttackRangedProgression{ true, true, true };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
+	TArray<bool> bHasScalingPrefireProgression{ true, true, true };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
+	float ProgressionResetTime{ 1 };
+
+	int CurrentProgression{ 0 };
+
+	bool bInitialProgressionReset{ true };
+
+#pragma endregion
+
+#pragma region Defense
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
+	float BasePhysicalProtections{ 11 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
+	float BaseMagicalProtections{ 30 };
+
+	float CurrentPhysicalProtections{ 0 };
+
+	float CurrentMagicalProtections{ 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
+	float PhysicalProtectionsPerLevel{ 2.6 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
+	float MagicalProtectionsPerLevel{ .9 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
+	float BaseHealth{ 600 };
+
+	float CurrentHealth{ 0 };
+
+	float MaxHealth{ 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
+	float HealthPerLevel{ 71 };
+
+	float Shield{ 0 };
+
+	const float MaxProtection{ 325 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
+	bool bHasBasicHealthBar{ false };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
+	int NumberOfBasics{ 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
+	float BaseHealthPerFive{ 7 };
+
+	float CurrentHealthPerFive{ 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
+	float HealthPerFivePerLevel{ .47 };
+
+	const float MaxHealthPerFive{ 100 };
+
+#pragma endregion
+
+#pragma region Movement
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float BaseMovementSpeed{ 360 };
+
+	float UndiminishedMovementSpeed{ 0 };
+
+	float DiminishedMovementSpeed{ 0 };
+
+	const float MovementSpeedDiminishments[2]{ 457, 540.5 };
+
+	const float MovementSpeedDiminishmentMultipliers[2]{ 0.8, 0.5 };
+
+	const float MinimumMovementSpeed{ 150 };
+
+	const float MaximumDiminishedMovementSpeed{ 753.55 };
+
+	float StrafePenalty{ 0.8 };
+
+	float BackpedalPenalty{ 0.6 };
+
+#pragma endregion
+
+#pragma region Identity
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
+	FString UnitName{ "Unknown" };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
+	bool bIsOrder{ true };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
+	bool bIsNeutral{ false };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
+	int GodLevel{ 20 };
+
+#pragma endregion
+
+	bool bIsJumping{ false };
+
+	int AbilityPoints{ 0 };
+
+	float Ability1Cooldown{ 1.6 };
+
+	float Ability2Cooldown{ 5 };
+
+	float Ability3Cooldown{ 10 };
+
+	float Ability4Cooldown{ 30 };
 
 public:	
 

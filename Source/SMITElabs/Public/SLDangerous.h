@@ -4,7 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "SMITElabs/Public/SLVulnerable.h"
 #include "SLDangerous.generated.h"
+
+class ISLVulnerable;
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
@@ -23,90 +26,30 @@ class SMITELABS_API ISLDangerous
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	void SetBasicAttackSpeed(float Val);
+	virtual void SetBasicAttackSpeed(float Val) = 0;
 
-	float GetCurrentBasicAttackDamage() const;
+	virtual float GetCurrentBasicAttackDamage() const = 0;
 
-	float GetPhysicalPower() const;
+	virtual float GetPhysicalPower() const = 0;
 
-	float GetMagicalPower() const;
+	virtual float GetMagicalPower() const = 0;
 
-	float GetFlatPhysicalPenetration() const;
+	virtual float GetFlatPhysicalPenetration() const = 0;
 
-	float GetFlatMagicalPenetration() const;
+	virtual float GetFlatMagicalPenetration() const = 0;
 
-	float GetPercentagePhysicalPenetration() const;
+	virtual float GetPercentagePhysicalPenetration() const = 0;
 
-	float GetPercentageMagicalPenetration() const;
+	virtual float GetPercentageMagicalPenetration() const = 0;
 
-	float GetBasicAttackPowerScaling() const;
+	virtual float GetBasicAttackPowerScaling() const = 0;
 
-	bool GetIsPhysicalDamage() const;
+	virtual bool GetIsPhysicalDamage() const = 0;
+
+	virtual float CalculateTotalProtections(ISLVulnerable* Targeted) const = 0;
 
 protected:
 
-	float BasicAttackSpeed{ 1 };
-
-	bool bIsBasicAttacking{ false };
-
-	bool bFatalis{ false };
-
-	float BasicAttackPenalty{ 1 };
-
-	float BaseBasicAttackDamage{ 43 };
-
-	float CurrentBasicAttackDamage{ BaseBasicAttackDamage };
-
-	float BasicAttackPowerScaling{ 1 };
-
-	float PhysicalPower{ 0 };
-
-	float MagicalPower{ 0 };
-
-	float FlatPhysicalPenetration{ 0 };
-
-	float FlatMagicalPenetration{ 0 };
-
-	float PercentagePhysicalPenetration{ 0 };
-
-	float PercentageMagicalPenetration{ 0 };
-
-	bool bIsPhysicalDamage{ true };
-
-	TArray<float> BasicAttackRefireProgression{ 0.5, 1, 1 };
-
-	TArray<float> BasicAttackPrefireProgression{ 0.25, 0.25, 0.5 };
-
-	TArray<float> BasicAttackRangeProgression{ 55, 55, 55 };
-
-	TArray<float> BasicAttackDamageProgression{ BasicAttackRefireProgression };
-
-	TArray<float> BasicAttackDisjointProgression{ 306.25, 0, 306.25, 0, 306.25, 0 };
-
-	TArray<float> RangedBasicAttackProjectileSizeProgression{ 3, 3, 3 };
-
-	TArray<float> RangedBasicAttackProjectileSpeedProgression{ 110, 110, 110 };
-
-	TArray<bool> bCleaveProgression{ false, false, false };
-
-	TArray<float> CleaveDamageProgression{ 1, 1, 1 };
-
-	TArray<float> RangedCleaveRangeProgression{ 7.5, 7.5, 7.5 };
-
-	TArray<bool> bIsBasicAttackRangedProgression{ true, true, true };
-
-	TArray<bool> bHasScalingPrefireProgression{ true, true, true };
-
-	int CurrentProgression{ 0 };
-
-	const float ProgressionResetTime{ 1 };
-
-	float BasicAttackStrafePenalty{ 0.8 };
-
-	float BasicAttackBackpedalPenalty{ 0.6 };
-
-	float BasicAttackRangedPenalty{ 0.5 };
-
-	float BasicAttackMeleePenalty{ 0.65 };
+	
 
 };

@@ -9,6 +9,6 @@ ASLTestGod::ASLTestGod()
 	BaseBasicAttackDamage = 400;
 	CurrentBasicAttackDamage = BaseBasicAttackDamage;
 	BasicAttackSpeed = 1;
-	bIsPhysicalDamage = false;
-	CurrentHealth = 2500;
+	bIsPhysicalDamage = false; 
+	BaseHealth = 360;
 }

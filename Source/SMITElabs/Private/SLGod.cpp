@@ -49,6 +49,103 @@ ASLGod::ASLGod()
 	PrefireTimerDelegate.BindUFunction(this, FName("OnPrefireTimerEnd"), false);
 	JumpTimerDelegate.BindUFunction(this, FName("OnEndJump"), false);
 	ProgressionResetTimerDelegate.BindUFunction(this, FName("ResetProgression"), false);
+	FinishProgressionResetTimerDelegate.BindUFunction(this, FName("FinishResetProgression"), false);
+}
+
+bool ASLGod::GetBIsOrder() const
+{
+	return bIsOrder;
+}
+
+float ASLGod::GetPhysicalProtections() const
+{
+	return CurrentPhysicalProtections;
+}
+
+float ASLGod::GetMagicalProtections() const
+{
+	return CurrentMagicalProtections;
+}
+
+void ASLGod::SetMovementSpeed(float Val)
+{
+	UndiminishedMovementSpeed = Val;
+	if (UndiminishedMovementSpeed >= MovementSpeedDiminishments[0])
+	{
+		if (UndiminishedMovementSpeed >= MovementSpeedDiminishments[1])
+		{
+			DiminishedMovementSpeed = MovementSpeedDiminishments[0] + (MovementSpeedDiminishments[1] - MovementSpeedDiminishments[0]) * MovementSpeedDiminishmentMultipliers[0] + (Val - MovementSpeedDiminishments[1]) * MovementSpeedDiminishmentMultipliers[1];
+		}
+		else
+		{
+			DiminishedMovementSpeed = MovementSpeedDiminishments[0] + (Val - MovementSpeedDiminishments[0]) * MovementSpeedDiminishmentMultipliers[0];
+		}
+	}
+	else if (UndiminishedMovementSpeed < MinimumMovementSpeed)
+	{
+		UndiminishedMovementSpeed = MinimumMovementSpeed;
+		DiminishedMovementSpeed = MinimumMovementSpeed;
+	}
+	else
+	{
+		DiminishedMovementSpeed = UndiminishedMovementSpeed;
+	}
+}
+
+void ASLGod::SetBasicAttackSpeed(float Val)
+{
+	BasicAttackSpeed = Val;
+}
+
+float ASLGod::GetCurrentBasicAttackDamage() const
+{
+	return CurrentBasicAttackDamage;
+}
+
+float ASLGod::GetPhysicalPower() const
+{
+	return PhysicalPower;
+}
+
+float ASLGod::GetMagicalPower() const
+{
+	return MagicalPower;
+}
+
+float ASLGod::GetFlatPhysicalPenetration() const
+{
+	return FlatPhysicalPenetration;
+}
+
+float ASLGod::GetFlatMagicalPenetration() const
+{
+	return FlatMagicalPenetration;
+}
+
+float ASLGod::GetPercentagePhysicalPenetration() const
+{
+	return PercentagePhysicalPenetration;
+}
+
+float ASLGod::GetPercentageMagicalPenetration() const
+{
+	return PercentageMagicalPenetration;
+}
+
+float ASLGod::GetBasicAttackPowerScaling() const
+{
+	return BasicAttackPowerScaling;
+}
+
+bool ASLGod::GetIsPhysicalDamage() const
+{
+	return bIsPhysicalDamage;
+}
+
+float ASLGod::CalculateTotalProtections(ISLVulnerable* Targeted) const
+{
+	if (bIsPhysicalDamage) return (Targeted->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() > 0 ? (Targeted->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() : 0;
+	return (Targeted->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() > 0 ? (Targeted->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() : 0;
 }
 
 // Called when the game starts or when spawned
@@ -56,11 +153,15 @@ void ASLGod::BeginPlay()
 {
 	Super::BeginPlay();
 
-	bIsOrder = bIsOrderBP;
-
 	SetMovementSpeed(BaseMovementSpeed);
 	CurrentBasicAttackDamage = BaseBasicAttackDamage;
-	
+	MaxHealth = BaseHealth + HealthPerLevel * GodLevel;
+	CurrentHealth = MaxHealth;
+	CurrentPhysicalProtections = BasePhysicalProtections + PhysicalProtectionsPerLevel * GodLevel;
+	CurrentMagicalProtections = BaseMagicalProtections + MagicalProtectionsPerLevel * GodLevel;
+	CurrentHealthPerFive = BaseHealthPerFive + HealthPerFivePerLevel * GodLevel;
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%f"), CurrentHealthPerFive));
+
 	if (this == UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
 	{
 		PlayerController->SetControlRotation(FRotator(-35, 0, 0));
@@ -146,7 +247,7 @@ void ASLGod::MoveRight(float Val)
 	if (Val != 0)
 	{
 		if (PlayerController->IsInputKeyDown(FKey("W")) || PlayerController->IsInputKeyDown(FKey("S"))) return;
-		if (BasicAttackPenalty < BasicAttackStrafePenalty && !bFatalis)
+		if (BasicAttackPenalty < StrafePenalty && !bFatalis)
 		{
 			if (Val > 0) Val = BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
 			else Val = -BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
@@ -160,11 +261,36 @@ void ASLGod::MoveRight(float Val)
 void ASLGod::MoveDiagonally(int ValX, int ValY)
 {
 	float Val{ 0 };
-	if (BasicAttackPenalty < BasicAttackStrafePenalty && !bFatalis) Val = BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
+	if (BasicAttackPenalty < StrafePenalty && !bFatalis) Val = BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
 	else Val = 0.8 * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
 	FVector Vec = FVector(StaticMeshComponent->GetForwardVector() * ValX + StaticMeshComponent->GetRightVector() * ValY);
 	Vec.Normalize();
 	AddMovementInput(Vec, Val);
+}
+
+void ASLGod::UseAbility1()
+{
+	if (GetWorld()->GetTimerManager().IsTimerActive(Ability1CooldownTimerHandle)) GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability 1 is cooling down: %fs"), GetWorld()->GetTimerManager().GetTimerRemaining(Ability1CooldownTimerHandle)));
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ability 1 used!"));
+		GetWorld()->GetTimerManager().SetTimer(Ability1CooldownTimerHandle, Ability1Cooldown, false);
+	}
+}
+
+void ASLGod::UseAbility2()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ability 2 used!"));
+}
+
+void ASLGod::UseAbility3()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ability 3 used!"));
+}
+
+void ASLGod::UseAbility4()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ultimate Ability used!"));
 }
 
 void ASLGod::OnBeginJump()
@@ -289,13 +415,11 @@ void ASLGod::FireMeleeBasicAttack()
 	{
 		if (GetIsPhysicalDamage())
 		{
-			float TotalProtections = (CurrentTarget->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() > 0 ? (CurrentTarget->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() : 0;
-			CurrentTarget->TakeHealthDamage(((GetCurrentBasicAttackDamage() + GetPhysicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
+			CurrentTarget->TakeHealthDamage(((GetCurrentBasicAttackDamage() + GetPhysicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression]) * (100 / (CalculateTotalProtections(CurrentTarget) + 100)), this);
 		}
 		else
 		{
-			float TotalProtections = (CurrentTarget->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() > 0 ? (CurrentTarget->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() : 0;
-			CurrentTarget->TakeHealthDamage(((GetCurrentBasicAttackDamage() + GetMagicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
+			CurrentTarget->TakeHealthDamage(((GetCurrentBasicAttackDamage() + GetMagicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression]) * (100 / (CalculateTotalProtections(CurrentTarget) + 100)), this);
 		}
 		if (bCleaveProgression[CurrentProgression])
 		{
@@ -309,13 +433,11 @@ void ASLGod::FireMeleeBasicAttack()
 						ISLVulnerable* CleaveTarget = Cast<ISLVulnerable>(var);
 						if (GetIsPhysicalDamage())
 						{
-							float TotalProtections = (CleaveTarget->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() > 0 ? (CleaveTarget->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() : 0;
-							CleaveTarget->TakeHealthDamage(((GetCurrentBasicAttackDamage() + GetPhysicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression] * CleaveDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
+							CleaveTarget->TakeHealthDamage(((GetCurrentBasicAttackDamage() + GetPhysicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression] * CleaveDamageProgression[CurrentProgression]) * (100 / (CalculateTotalProtections(CleaveTarget) + 100)), this);
 						}
 						else
 						{
-							float TotalProtections = (CleaveTarget->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() > 0 ? (CleaveTarget->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() : 0;
-							CleaveTarget->TakeHealthDamage(((GetCurrentBasicAttackDamage() + GetMagicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression] * CleaveDamageProgression[CurrentProgression]) * (100 / (TotalProtections + 100)), this);
+							CleaveTarget->TakeHealthDamage(((GetCurrentBasicAttackDamage() + GetMagicalPower() * GetBasicAttackPowerScaling()) * BasicAttackDamageProgression[CurrentProgression] * CleaveDamageProgression[CurrentProgression]) * (100 / (CalculateTotalProtections(CleaveTarget) + 100)), this);
 						}
 					}
 				}
@@ -329,7 +451,6 @@ void ASLGod::FireMeleeBasicAttack()
 void ASLGod::ResetProgression()
 {
 	CurrentProgression = 0;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Progression Reset: No AA After %fs"), ProgressionResetTime));
 	if (bIsBasicAttackRangedProgression[CurrentProgression])
 	{
 		RangedAimComponent->SetHiddenInGame(false);
@@ -346,7 +467,20 @@ void ASLGod::ResetProgression()
 		RangedAimComponent->SetHiddenInGame(true);
 		CurrentAimComponent = MeleeAimComponent;
 	}
-	CurrentAimComponent->SetMaterial(0, MTargeterStandby);
+	if (bInitialProgressionReset) bInitialProgressionReset = false;
+	else 
+	{
+		CurrentAimComponent->SetMaterial(0, MTargeterReset);
+		GetWorld()->GetTimerManager().SetTimer(FinishProgressionResetTimerHandle, FinishProgressionResetTimerDelegate, 0.25, false);
+	}
+}
+
+void ASLGod::FinishResetProgression()
+{
+	if (CurrentAimComponent->GetMaterial(0) == MTargeterReset)
+	{
+		CurrentAimComponent->SetMaterial(0, MTargeterStandby);
+	}
 }
 
 void ASLGod::ChangeBasicAttackTargeter()
@@ -389,7 +523,7 @@ void ASLGod::ChangeBasicAttackTargeter()
 void ASLGod::TakeHealthDamage(float Val, ISLDangerous* Origin)
 {
 	float OriginalHealth = CurrentHealth;
-	ISLVulnerable::TakeHealthDamage(Val, Origin);
+	CurrentHealth -= Val;
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s dealt %f damage to %s (%f -> %f)"), *Cast<AActor>(Origin)->GetName(), Val, *this->GetName(), OriginalHealth, CurrentHealth));
 	if (CurrentHealth <= 0)
 	{
@@ -408,6 +542,11 @@ void ASLGod::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ASLGod::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ASLGod::MoveRight);
+
+	PlayerInputComponent->BindAction("Ability1", IE_Released, this, &ASLGod::UseAbility1);
+	PlayerInputComponent->BindAction("Ability2", IE_Released, this, &ASLGod::UseAbility2);
+	PlayerInputComponent->BindAction("Ability3", IE_Released, this, &ASLGod::UseAbility3);
+	PlayerInputComponent->BindAction("Ability4", IE_Released, this, &ASLGod::UseAbility4);
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASLGod::OnBeginJump);
 	PlayerInputComponent->BindAction("BasicAttack", IE_Pressed, this, &ASLGod::OnBeginFireBasicAttack);

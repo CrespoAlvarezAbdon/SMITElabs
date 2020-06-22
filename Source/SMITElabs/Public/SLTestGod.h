@@ -16,4 +16,5 @@ class SMITELABS_API ASLTestGod : public ASLGod
 
 public:
 	ASLTestGod();
+
 };

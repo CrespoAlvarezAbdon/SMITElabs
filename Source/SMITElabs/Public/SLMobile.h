@@ -23,21 +23,6 @@ class SMITELABS_API ISLMobile
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	void SetMovementSpeed(float Val);
+	virtual void SetMovementSpeed(float Val) = 0;
 
-protected:
-
-	float BaseMovementSpeed{ 360 };
-
-	float UndiminishedMovementSpeed{ 0 };
-
-	float DiminishedMovementSpeed{ 0 };
-
-	const float MovementSpeedDiminishments[2]{ 457, 540.5 };
-
-	const float MovementSpeedDiminishmentMultipliers[2]{ 0.8, 0.5 };
-
-	const float MinimumMovementSpeed{ 150 };
-
-	const float MaximumDiminishedMovementSpeed{ 753.55 };
 };

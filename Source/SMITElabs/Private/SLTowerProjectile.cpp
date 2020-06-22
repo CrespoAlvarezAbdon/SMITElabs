@@ -32,6 +32,8 @@ void ASLTowerProjectile::SetOrigin(ASLTower* Val) { Origin = Val; }
 
 void ASLTowerProjectile::SetTowerDamageMultiplier(float Val) { TowerDamageMultiplier = Val; }
 
+void ASLTowerProjectile::SetProjectileSpeed(float Val) { ProjectileMovementComponent->InitialSpeed = Val; ProjectileMovementComponent->MaxSpeed = Val; }
+
 // Called when the game starts or when spawned
 void ASLTowerProjectile::BeginPlay()
 {

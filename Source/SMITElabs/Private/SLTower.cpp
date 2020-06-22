@@ -34,13 +34,22 @@ ASLTower::ASLTower()
 	BeginPlayTimerDelegate.BindUFunction(this, FName("InitialSearchForTarget"), false);
 	TowerHealthRegenTimerDelegate.BindUFunction(this, FName("HealTower"), false);
 
-	BaseHealth = 2000;
-	CurrentHealth = BaseHealth;
-	TowerMaxRegenHealth = BaseHealth * .7;
-	CurrentBasicAttackDamage = 215;
-	PhysicalProtections = 125;
-	MagicalProtections = 125;
 	if (!bHasShaft) { TowerShaftComponent->ToggleVisibility(false); TowerHeadComponent->SetRelativeLocation(FVector(TowerHeadComponent->GetRelativeLocation().X, TowerHeadComponent->GetRelativeLocation().Y, TowerHeadComponent->GetRelativeLocation().Z - 1250)); }
+}
+
+bool ASLTower::GetBIsOrder() const
+{
+	return bIsOrder;
+}
+
+float ASLTower::GetPhysicalProtections() const
+{
+	return PhysicalProtections;
+}
+
+float ASLTower::GetMagicalProtections() const
+{
+	return MagicalProtections;
 }
 
 void ASLTower::TakeHealthDamage(float Val, ISLDangerous* Origin)
@@ -48,7 +57,7 @@ void ASLTower::TakeHealthDamage(float Val, ISLDangerous* Origin)
 	float OriginalHealth = CurrentHealth;
 	if (Origin->GetIsPhysicalDamage()) Val *= 0.85; else Val *= 1.2;
 	Val *= .5;
-	ISLVulnerable::TakeHealthDamage(Val, Origin);
+	CurrentHealth -= Val;
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s dealt %f damage to %s (%f -> %f) [Backdoor Protections!]"), *Cast<AActor>(Origin)->GetName(), Val, *this->GetName(), OriginalHealth, CurrentHealth));
 	if (CurrentHealth <= 0)
 	{
@@ -57,12 +66,66 @@ void ASLTower::TakeHealthDamage(float Val, ISLDangerous* Origin)
 	}
 }
 
+void ASLTower::SetBasicAttackSpeed(float Val)
+{
+	AttackInterval = Val;
+}
+
+float ASLTower::GetCurrentBasicAttackDamage() const
+{
+	return CurrentBasicAttackDamage;
+}
+
+float ASLTower::GetPhysicalPower() const
+{
+	return PhysicalPower;
+}
+
+float ASLTower::GetMagicalPower() const
+{
+	return MagicalPower;
+}
+
+float ASLTower::GetFlatPhysicalPenetration() const
+{
+	return FlatPhysicalPenetration;
+}
+
+float ASLTower::GetFlatMagicalPenetration() const
+{
+	return FlatMagicalPenetration;
+}
+
+float ASLTower::GetPercentagePhysicalPenetration() const
+{
+	return PercentagePhysicalPenetration;
+}
+
+float ASLTower::GetPercentageMagicalPenetration() const
+{
+	return PercentageMagicalPenetration;
+}
+
+float ASLTower::GetBasicAttackPowerScaling() const
+{
+	return BasicAttackPowerScaling;
+}
+
+bool ASLTower::GetIsPhysicalDamage() const
+{
+	return bIsPhysicalDamage;
+}
+
+float ASLTower::CalculateTotalProtections(ISLVulnerable* Targeted) const
+{
+	if (bIsPhysicalDamage) return (Targeted->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() > 0 ? (Targeted->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() : 0;
+	return (Targeted->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() > 0 ? (Targeted->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() : 0;
+}
+
 // Called when the game starts or when spawned
 void ASLTower::BeginPlay()
 {
 	Super::BeginPlay();
-
-	bIsOrder = bIsOrderBP;
 
 	GetWorld()->GetTimerManager().SetTimer(FireTowerShotTimerHandle, BeginPlayTimerDelegate, .1, false);
 	if (bHasTowerHPS) GetWorld()->GetTimerManager().SetTimer(TowerHealthRegenTimerHandle, TowerHealthRegenTimerDelegate, 1, false);
@@ -126,7 +189,8 @@ void ASLTower::PrepareTowerShot()
 		SpawnedTowerProjectile->SetCurrentTarget(CurrentTarget);
 		SpawnedTowerProjectile->SetOrigin(this);
 		SpawnedTowerProjectile->SetTowerDamageMultiplier(TowerDamageMultiplier);
-		GetWorld()->GetTimerManager().SetTimer(FireTowerShotTimerHandle, FireTowerShotTimerDelegate, .25, false);
+		SpawnedTowerProjectile->SetProjectileSpeed(ProjectileSpeed);
+		GetWorld()->GetTimerManager().SetTimer(FireTowerShotTimerHandle, FireTowerShotTimerDelegate, AttackDelay, false);
 	}
 }
 
@@ -134,7 +198,7 @@ void ASLTower::FireTowerShot()
 {
 	UGameplayStatics::FinishSpawningActor(SpawnedTowerProjectile, SpawnedTowerProjectile->GetTransform());
 	TowerDamageMultiplier += TowerDamageMultiplierIncrement;
-	GetWorld()->GetTimerManager().SetTimer(FireTowerShotTimerHandle, PrepareTowerShotTimerDelegate, 1, false);
+	GetWorld()->GetTimerManager().SetTimer(FireTowerShotTimerHandle, PrepareTowerShotTimerDelegate, AttackInterval, false);
 }
 
 void ASLTower::HealTower()

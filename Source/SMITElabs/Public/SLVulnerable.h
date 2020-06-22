@@ -4,8 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "SMITElabs/Public/SLDangerous.h"
 #include "SLVulnerable.generated.h"
+
+class ISLDangerous;
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
@@ -24,31 +25,10 @@ class SMITELABS_API ISLVulnerable
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	virtual void TakeHealthDamage(float Val, ISLDangerous* Origin);
+	virtual void TakeHealthDamage(float Val, ISLDangerous* Origin) = 0;
 
-	virtual float GetPhysicalProtections();
+	virtual float GetPhysicalProtections() const = 0;
 
-	virtual float GetMagicalProtections();
+	virtual float GetMagicalProtections() const = 0;
 
-protected:
-
-	float BaseHealth{ 600 };
-
-	float CurrentHealth{ BaseHealth };
-
-	float MaxHealth{ BaseHealth };
-
-	float Shield{ 0 };
-
-	float PhysicalProtections{ 100 };
-
-	float MagicalProtections{ 100 };
-
-	const float MaxProtection{ 325 };
-
-	const float MaxPenetration{ 50 };
-
-	bool bHasBasicHealthBar{ false };
-
-	int NumberOfBasics{ 0 };
 };
