@@ -26,6 +26,8 @@ ASLRangedBasicProjectile::ASLRangedBasicProjectile()
 	WallCollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ASLRangedBasicProjectile::OnWallHit);
 }
 
+float ASLRangedBasicProjectile::GetProjectileLength() { return ProjectileLength; }
+
 // Called when the game starts or when spawned
 void ASLRangedBasicProjectile::BeginPlay()
 {
