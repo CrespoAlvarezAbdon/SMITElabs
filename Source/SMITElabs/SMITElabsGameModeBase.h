@@ -21,8 +21,11 @@ class SMITELABS_API ASMITElabsGameModeBase : public AGameModeBase
 	
 public:
 	UFUNCTION(Exec, Category = "ExecFunctions")
-	void SetMovementSpeed(float val);
+	void SetMovementSpeed(float Val);
 
 	UFUNCTION(Exec, Category = "ExecFunctions")
-	void SetBasicAttackSpeed(float val);
+	void SetBasicAttackSpeed(float Val);
+
+	UFUNCTION(Exec, Category = "ExecFunctions")
+	void SetGodLevel(float Val);
 };

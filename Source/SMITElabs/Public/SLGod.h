@@ -59,6 +59,8 @@ public:
 
 	virtual void SetBasicAttackSpeed(float Val) override;
 
+	void SetGodLevel(int Val);
+
 	virtual float GetCurrentBasicAttackDamage() const override;
 
 	virtual float GetPhysicalPower() const override;
@@ -97,6 +99,14 @@ public:
 
 	void UseAbility4();
 
+	void LevelAbility1();
+
+	void LevelAbility2();
+
+	void LevelAbility3();
+
+	void LevelAbility4();
+
 	void OnBeginJump();
 
 	UFUNCTION()
@@ -132,6 +142,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	void SetBaseStatistics();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
 	UStaticMeshComponent* StaticMeshComponent;
@@ -207,7 +219,13 @@ protected:
 #pragma region Offense
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
-	float BasicAttackSpeed{ 1 };
+	float BaseBasicAttackSpeed{ 1 };
+
+	float CurrentBasicAttackSpeed{ 0 };
+
+	// Used as a percentage increase of the base rather than a flat numerical
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
+	float BasicAttackSpeedPerLevel{ .012 };
 
 	bool bIsBasicAttacking{ false };
 
@@ -219,7 +237,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
 	float BaseBasicAttackDamage{ 43 };
 
-	float CurrentBasicAttackDamage{ BaseBasicAttackDamage };
+	float CurrentBasicAttackDamage{ 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
+	float BasicAttackDamagePerLevel{ 1.5 };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
 	float BasicAttackPowerScaling{ 1 };
@@ -268,7 +289,7 @@ protected:
 	TArray<float> BasicAttackDamageProgression{ BasicAttackRefireProgression };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
-	TArray<float> BasicAttackDisjointProgression{ 306.25, 0, 306.25, 0, 306.25, 0 };
+	TArray<float> BasicAttackDisjointProgression{ 156.25, 0, 156.25, 0, 156.25, 0 };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<float> RangedBasicAttackProjectileSizeProgression{ 3, 3, 3 };
@@ -288,6 +309,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<bool> bIsBasicAttackRangedProgression{ true, true, true };
 
+	// If disabled, Prefire shouldn't exceed (Refire / 2.5), otherwise attack speed will become inconsistent because the Postfire will be less than 0
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<bool> bHasScalingPrefireProgression{ true, true, true };
 
@@ -346,7 +368,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	float HealthPerFivePerLevel{ .47 };
 
-	const float MaxHealthPerFive{ 100 };
+	const float MaxPerFive{ 100 };
 
 #pragma endregion
 
@@ -371,6 +393,8 @@ protected:
 
 	float BackpedalPenalty{ 0.6 };
 
+	bool bIsJumping{ false };
+
 #pragma endregion
 
 #pragma region Identity
@@ -389,18 +413,37 @@ protected:
 
 #pragma endregion
 
-	bool bIsJumping{ false };
+#pragma region Ability
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	float CooldownReductionPercentage{ 0 };
 
 	int AbilityPoints{ 0 };
 
-	float Ability1Cooldown{ 1.6 };
+	int Ability1Level{ 0 };
+	int Ability2Level{ 0 };
+	int Ability3Level{ 0 };
+	int Ability4Level{ 0 };
 
-	float Ability2Cooldown{ 5 };
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
+	TArray<float> Ability1Cooldowns = { 12, 12, 12, 12, 12 };
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
+	TArray<float>  Ability2Cooldowns = { 15, 14, 13, 12, 11 };
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
+	TArray<float>  Ability3Cooldowns = { 15, 15, 15, 15, 15 };
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
+	TArray<float>  Ability4Cooldowns = { 18, 18, 18, 18, 18 };
 
-	float Ability3Cooldown{ 10 };
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
+	TArray<float>  Ability1ManaCost = { 60, 65, 70, 75, 80 };
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
+	TArray<float>  Ability2ManaCost = { 60, 70, 80, 90, 100 };
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
+	TArray<float>  Ability3ManaCost = { 70, 75, 80, 85, 90 };
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
+	TArray<float>  Ability4ManaCost = { 0, 0, 0, 0, 0 };
 
-	float Ability4Cooldown{ 30 };
-
+#pragma endregion
 public:	
 
 	// Called to bind functionality to input

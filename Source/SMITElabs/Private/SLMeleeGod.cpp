@@ -11,6 +11,6 @@ ASLMeleeGod::ASLMeleeGod()
 	BaseMovementSpeed = 594;
 	BaseBasicAttackDamage = 400;
 	CurrentBasicAttackDamage = BaseBasicAttackDamage;
-	BasicAttackSpeed = 1;
+	BaseBasicAttackSpeed = 1;
 	CurrentHealth = 2500;
 }

@@ -39,8 +39,8 @@ ASLGod::ASLGod()
 
 	CharacterMovementComponent = GetCharacterMovement();
 
-	CharacterMovementComponent->MaxAcceleration = 12000;
-	CharacterMovementComponent->MaxWalkSpeed = 3000;
+	CharacterMovementComponent->MaxAcceleration = 20000;
+	CharacterMovementComponent->MaxWalkSpeed = 5000;
 	CharacterMovementComponent->JumpZVelocity = 1000;
 	CharacterMovementComponent->AirControl = 1;
 	CharacterMovementComponent->GravityScale = 3;
@@ -94,7 +94,30 @@ void ASLGod::SetMovementSpeed(float Val)
 
 void ASLGod::SetBasicAttackSpeed(float Val)
 {
-	BasicAttackSpeed = Val;
+	CurrentBasicAttackSpeed = Val;
+}
+
+void ASLGod::SetGodLevel(int Val)
+{
+	GodLevel = Val;
+	Ability1Level = 0;
+	Ability2Level = 0;
+	Ability3Level = 0;
+	Ability4Level = 0;
+	SetBaseStatistics();
+}
+
+void ASLGod::SetBaseStatistics()
+{
+	SetMovementSpeed(BaseMovementSpeed);
+	CurrentBasicAttackSpeed = BaseBasicAttackSpeed + (BaseBasicAttackSpeed * BasicAttackSpeedPerLevel) * GodLevel;
+	CurrentBasicAttackDamage = BaseBasicAttackDamage + BasicAttackDamagePerLevel * GodLevel;
+	MaxHealth = BaseHealth + HealthPerLevel * GodLevel;
+	CurrentHealth = MaxHealth;
+	CurrentPhysicalProtections = BasePhysicalProtections + PhysicalProtectionsPerLevel * GodLevel;
+	CurrentMagicalProtections = BaseMagicalProtections + MagicalProtectionsPerLevel * GodLevel;
+	CurrentHealthPerFive = BaseHealthPerFive + HealthPerFivePerLevel * GodLevel;
+	AbilityPoints = GodLevel;
 }
 
 float ASLGod::GetCurrentBasicAttackDamage() const
@@ -153,14 +176,7 @@ void ASLGod::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetMovementSpeed(BaseMovementSpeed);
-	CurrentBasicAttackDamage = BaseBasicAttackDamage;
-	MaxHealth = BaseHealth + HealthPerLevel * GodLevel;
-	CurrentHealth = MaxHealth;
-	CurrentPhysicalProtections = BasePhysicalProtections + PhysicalProtectionsPerLevel * GodLevel;
-	CurrentMagicalProtections = BaseMagicalProtections + MagicalProtectionsPerLevel * GodLevel;
-	CurrentHealthPerFive = BaseHealthPerFive + HealthPerFivePerLevel * GodLevel;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%f"), CurrentHealthPerFive));
+	SetBaseStatistics();
 
 	if (this == UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
 	{
@@ -270,27 +286,134 @@ void ASLGod::MoveDiagonally(int ValX, int ValY)
 
 void ASLGod::UseAbility1()
 {
-	if (GetWorld()->GetTimerManager().IsTimerActive(Ability1CooldownTimerHandle)) GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability 1 is cooling down: %fs"), GetWorld()->GetTimerManager().GetTimerRemaining(Ability1CooldownTimerHandle)));
-	else
+	if (Ability1Level > 0)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ability 1 used!"));
-		GetWorld()->GetTimerManager().SetTimer(Ability1CooldownTimerHandle, Ability1Cooldown, false);
+		if (GetWorld()->GetTimerManager().IsTimerActive(Ability1CooldownTimerHandle)) GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability 1 is cooling down: %fs"), GetWorld()->GetTimerManager().GetTimerRemaining(Ability1CooldownTimerHandle)));
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ability 1 used!"));
+			GetWorld()->GetTimerManager().SetTimer(Ability1CooldownTimerHandle, Ability1Cooldowns[Ability1Level - 1] * (1 - CooldownReductionPercentage), false);
+		}
 	}
+	else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("No points in Ability 1."));
 }
 
 void ASLGod::UseAbility2()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ability 2 used!"));
+	if (Ability2Level > 0)
+	{
+		if (GetWorld()->GetTimerManager().IsTimerActive(Ability2CooldownTimerHandle)) GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability 2 is cooling down: %fs"), GetWorld()->GetTimerManager().GetTimerRemaining(Ability2CooldownTimerHandle)));
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ability 2 used!"));
+			GetWorld()->GetTimerManager().SetTimer(Ability2CooldownTimerHandle, Ability2Cooldowns[Ability2Level - 1] * (1 - CooldownReductionPercentage), false);
+		}
+	}
+	else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("No points in Ability 2."));
 }
 
 void ASLGod::UseAbility3()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ability 3 used!"));
+	if (Ability3Level > 0)
+	{
+		if (GetWorld()->GetTimerManager().IsTimerActive(Ability3CooldownTimerHandle)) GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability 3 is cooling down: %fs"), GetWorld()->GetTimerManager().GetTimerRemaining(Ability3CooldownTimerHandle)));
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ability 3 used!"));
+			GetWorld()->GetTimerManager().SetTimer(Ability3CooldownTimerHandle, Ability3Cooldowns[Ability3Level - 1] * (1 - CooldownReductionPercentage), false);
+		}
+	}
+	else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("No points in Ability 3."));
 }
 
 void ASLGod::UseAbility4()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ultimate Ability used!"));
+	if (Ability4Level > 0)
+	{
+		if (GetWorld()->GetTimerManager().IsTimerActive(Ability4CooldownTimerHandle)) GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ultimate Ability is cooling down: %fs"), GetWorld()->GetTimerManager().GetTimerRemaining(Ability4CooldownTimerHandle)));
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ultimate Ability used!"));
+			GetWorld()->GetTimerManager().SetTimer(Ability4CooldownTimerHandle, Ability4Cooldowns[Ability4Level - 1] * (1 - CooldownReductionPercentage), false);
+		}
+	}
+	else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("No points in Ultimate Ability."));
+}
+
+void ASLGod::LevelAbility1()
+{
+	if (AbilityPoints > 0)
+	{
+		if (Ability1Level < 5)
+		{
+			if (Ability1Level < (float)GodLevel / 2)
+			{
+				++Ability1Level;
+				--AbilityPoints;
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability 1 is now Level %i! You have %i Ability Points left."), Ability1Level, AbilityPoints));
+			}
+			else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Current Rank of Ability 1 [%i] isn't less than your God Level divided by 2 [%i/2], cannot be levelled."), Ability1Level, GodLevel));
+		}
+		else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Ability 1 is already Max Rank."));
+	}
+	else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No Ability Points available."));
+}
+
+void ASLGod::LevelAbility2()
+{
+	if (AbilityPoints > 0)
+	{
+		if (Ability2Level < 5)
+		{
+			if (Ability2Level < (float)GodLevel / 2)
+			{
+				++Ability2Level;
+				--AbilityPoints;
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability 2 is now Level %i! You have %i Ability Points left."), Ability2Level, AbilityPoints));
+			}
+			else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Current Rank of Ability 2 [%i] isn't less than your God Level divided by 2 [%i/2], cannot be levelled."), Ability2Level, GodLevel));
+		}
+		else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Ability 2 is already Max Rank."));
+	}
+	else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No Ability Points available."));
+}
+
+void ASLGod::LevelAbility3()
+{
+	if (AbilityPoints > 0)
+	{
+		if (Ability3Level < 5)
+		{
+			if (Ability3Level < (float)GodLevel / 2)
+			{
+				++Ability3Level;
+				--AbilityPoints;
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability 3 is now Level %i! You have %i Ability Points left."), Ability3Level, AbilityPoints));
+			}
+			else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Current Rank of Ability 3 [%i] isn't less than your God Level divided by 2 [%f], cannot be levelled."), Ability3Level, (float)GodLevel / 2));
+		}
+		else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Ability 3 is already Max Rank."));
+	}
+	else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No Ability Points available."));
+}
+
+void ASLGod::LevelAbility4()
+{
+	if (AbilityPoints > 0)
+	{
+		if (Ability4Level < 5)
+		{
+			if (Ability4Level * 4 <= GodLevel - 5 || GodLevel == 20)
+			{
+				++Ability4Level;
+				--AbilityPoints;
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ultimate Ability is now Level %i! You have %i Ability Points left."), Ability4Level, AbilityPoints));
+			}
+			else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Current Rank of Ultimate Ability multiplied by 4 [%i] isn't less than or equal to your God Level minus 5 [%i] and your God Level isn't 20, cannot be levelled."), Ability4Level * 4, GodLevel - 5));
+		}
+		else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Ultimate Ability is already Max Rank."));
+	}
+	else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No Ability Points available."));
 }
 
 void ASLGod::OnBeginJump()
@@ -328,13 +451,13 @@ void ASLGod::BeginFireBasicAttack()
 	if (bIsBasicAttacking && !bIsJumping && BasicAttackPenalty == 1)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(ProgressionResetTimerHandle);
-		GetWorld()->GetTimerManager().SetTimer(BasicAttackTimerHandle, BasicAttackTimerDelegate, BasicAttackRefireProgression[CurrentProgression] / BasicAttackSpeed, false);
+		GetWorld()->GetTimerManager().SetTimer(BasicAttackTimerHandle, BasicAttackTimerDelegate, BasicAttackRefireProgression[CurrentProgression] / CurrentBasicAttackSpeed, false);
 		if (bIsBasicAttackRangedProgression[CurrentProgression])
 		{
 			BasicAttackPenalty = BasicAttackRangedPenalty;
 			CurrentAimComponent = RangedAimComponent;
 			RangedAimComponent->SetMaterial(0, MTargeterWindup);
-			if (bHasScalingPrefireProgression[CurrentProgression] && BasicAttackRefireProgression[CurrentProgression] > BasicAttackRefireProgression[CurrentProgression] / BasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(PrefireTimerHandle, PrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * ((BasicAttackRefireProgression[CurrentProgression] / BasicAttackSpeed) / BasicAttackRefireProgression[CurrentProgression]), false);
+			if (bHasScalingPrefireProgression[CurrentProgression] && BasicAttackRefireProgression[CurrentProgression] > BasicAttackRefireProgression[CurrentProgression] / CurrentBasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(PrefireTimerHandle, PrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * ((BasicAttackRefireProgression[CurrentProgression] / CurrentBasicAttackSpeed) / BasicAttackRefireProgression[CurrentProgression]), false);
 			else GetWorld()->GetTimerManager().SetTimer(PrefireTimerHandle, PrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression], false);
 		}
 		else
@@ -342,7 +465,7 @@ void ASLGod::BeginFireBasicAttack()
 			BasicAttackPenalty = BasicAttackMeleePenalty;
 			CurrentAimComponent = MeleeAimComponent;
 			MeleeAimComponent->SetMaterial(0, MTargeterWindup);
-			if (bHasScalingPrefireProgression[CurrentProgression] && BasicAttackPrefireProgression[CurrentProgression] < BasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(PrefireTimerHandle, PrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * BasicAttackPrefireProgression[CurrentProgression] / BasicAttackSpeed, false);
+			if (bHasScalingPrefireProgression[CurrentProgression] && BasicAttackPrefireProgression[CurrentProgression] < CurrentBasicAttackSpeed) GetWorld()->GetTimerManager().SetTimer(PrefireTimerHandle, PrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression] * BasicAttackPrefireProgression[CurrentProgression] / CurrentBasicAttackSpeed, false);
 			else GetWorld()->GetTimerManager().SetTimer(PrefireTimerHandle, PrefireTimerDelegate, BasicAttackPrefireProgression[CurrentProgression], false);
 		}
 	}
@@ -371,7 +494,7 @@ void ASLGod::OnPrefireTimerEnd()
 void ASLGod::FireRangedBasicAttack()
 {
 	ASLRangedBasicProjectile* SpawnedRangedBasicProjectile = GetWorld()->SpawnActorDeferred<ASLRangedBasicProjectile>(RangedBasicProjectile, GetTransform());
-	TArray<float> BasicAttackDisjoints{ BasicAttackDisjointProgression[CurrentProgression * 2], BasicAttackDisjointProgression[CurrentProgression * 2 + 1] };
+	TArray<float> BasicAttackDisjoints{ BasicAttackDisjointProgression[CurrentProgression * 2] + (SpawnedRangedBasicProjectile->GetProjectileLength() * 100) / 2, BasicAttackDisjointProgression[CurrentProgression * 2 + 1] };
 	SpawnedRangedBasicProjectile->SetBasicAttackDisjoints(BasicAttackDisjoints);
 	SpawnedRangedBasicProjectile->SetOrigin(Cast<ISLDangerous>(this));
 	SpawnedRangedBasicProjectile->SetDamageProgressionMultiplier(BasicAttackDamageProgression[CurrentProgression]);
@@ -547,6 +670,11 @@ void ASLGod::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction("Ability2", IE_Released, this, &ASLGod::UseAbility2);
 	PlayerInputComponent->BindAction("Ability3", IE_Released, this, &ASLGod::UseAbility3);
 	PlayerInputComponent->BindAction("Ability4", IE_Released, this, &ASLGod::UseAbility4);
+
+	PlayerInputComponent->BindAction("LevelAbility1", IE_Pressed, this, &ASLGod::LevelAbility1);
+	PlayerInputComponent->BindAction("LevelAbility2", IE_Pressed, this, &ASLGod::LevelAbility2);
+	PlayerInputComponent->BindAction("LevelAbility3", IE_Pressed, this, &ASLGod::LevelAbility3);
+	PlayerInputComponent->BindAction("LevelAbility4", IE_Pressed, this, &ASLGod::LevelAbility4);
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASLGod::OnBeginJump);
 	PlayerInputComponent->BindAction("BasicAttack", IE_Pressed, this, &ASLGod::OnBeginFireBasicAttack);

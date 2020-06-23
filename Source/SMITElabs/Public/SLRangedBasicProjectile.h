@@ -23,6 +23,9 @@ class ISLIdentifiable;
 class AActor;
 class ASLGod;
 
+static const float ProjectileLength{ 3 };
+static const float ProjectileHeight{ 1 };
+
 UCLASS()
 class SMITELABS_API ASLRangedBasicProjectile : public AActor
 {
@@ -31,6 +34,8 @@ class SMITELABS_API ASLRangedBasicProjectile : public AActor
 public:	
 	// Sets default values for this actor's properties
 	ASLRangedBasicProjectile();
+
+	float GetProjectileLength();
 
 	void SetBasicAttackDisjoints(TArray<float> Val);
 
@@ -82,10 +87,6 @@ protected:
 	float ProjectileRange;
 
 	float ProjectileSize;
-
-	const float ProjectileLength{ 3 };
-
-	const float ProjectileHeight{ 1 };
 
 	bool bCleave;
 
