@@ -54,6 +54,8 @@ public:
 
 	virtual bool GetIsPhysicalDamage() const override;
 
+	virtual void OnBasicAttackHit(TArray<ISLVulnerable*> Targets) override;
+
 	virtual float CalculateTotalProtections(ISLVulnerable* Targeted) const override;
 
 protected:

@@ -118,6 +118,18 @@ void ASLGod::SetBaseStatistics()
 	CurrentMagicalProtections = BaseMagicalProtections + MagicalProtectionsPerLevel * GodLevel;
 	CurrentHealthPerFive = BaseHealthPerFive + HealthPerFivePerLevel * GodLevel;
 	AbilityPoints = GodLevel;
+
+	if (this == UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("HP5: %f"), CurrentHealthPerFive));
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("Magical Protections: %f"), CurrentMagicalProtections));
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("Physical Protections: %f"), CurrentPhysicalProtections));
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("Max Health: %f"), MaxHealth));
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("Basic Attack Damage: %f"), CurrentBasicAttackDamage));
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("Basic Attack Speed: %f"), CurrentBasicAttackSpeed));
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("Undimimished Movement Speed: %f, Diminished Movement Speed: %f"), UndiminishedMovementSpeed, DiminishedMovementSpeed));
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("%s Level %i"), *UnitName, GodLevel));
+	}
 }
 
 float ASLGod::GetCurrentBasicAttackDamage() const
@@ -286,58 +298,22 @@ void ASLGod::MoveDiagonally(int ValX, int ValY)
 
 void ASLGod::UseAbility1()
 {
-	if (Ability1Level > 0)
-	{
-		if (GetWorld()->GetTimerManager().IsTimerActive(Ability1CooldownTimerHandle)) GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability 1 is cooling down: %fs"), GetWorld()->GetTimerManager().GetTimerRemaining(Ability1CooldownTimerHandle)));
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ability 1 used!"));
-			GetWorld()->GetTimerManager().SetTimer(Ability1CooldownTimerHandle, Ability1Cooldowns[Ability1Level - 1] * (1 - CooldownReductionPercentage), false);
-		}
-	}
-	else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("No points in Ability 1."));
+	if (IsAbilityAvailable(Ability1CooldownTimerHandle, Ability1Level, "Ability 1")) ActivateCooldownTimer(Ability1CooldownTimerHandle, Ability1Cooldowns[Ability1Level], "Ability 1", true);
 }
 
 void ASLGod::UseAbility2()
 {
-	if (Ability2Level > 0)
-	{
-		if (GetWorld()->GetTimerManager().IsTimerActive(Ability2CooldownTimerHandle)) GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability 2 is cooling down: %fs"), GetWorld()->GetTimerManager().GetTimerRemaining(Ability2CooldownTimerHandle)));
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ability 2 used!"));
-			GetWorld()->GetTimerManager().SetTimer(Ability2CooldownTimerHandle, Ability2Cooldowns[Ability2Level - 1] * (1 - CooldownReductionPercentage), false);
-		}
-	}
-	else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("No points in Ability 2."));
+	if (IsAbilityAvailable(Ability2CooldownTimerHandle, Ability2Level, "Ability 2")) ActivateCooldownTimer(Ability2CooldownTimerHandle, Ability2Cooldowns[Ability2Level], "Ability 2", true);
 }
 
 void ASLGod::UseAbility3()
 {
-	if (Ability3Level > 0)
-	{
-		if (GetWorld()->GetTimerManager().IsTimerActive(Ability3CooldownTimerHandle)) GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability 3 is cooling down: %fs"), GetWorld()->GetTimerManager().GetTimerRemaining(Ability3CooldownTimerHandle)));
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ability 3 used!"));
-			GetWorld()->GetTimerManager().SetTimer(Ability3CooldownTimerHandle, Ability3Cooldowns[Ability3Level - 1] * (1 - CooldownReductionPercentage), false);
-		}
-	}
-	else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("No points in Ability 3."));
+	if (IsAbilityAvailable(Ability3CooldownTimerHandle, Ability3Level, "Ability 3")) ActivateCooldownTimer(Ability3CooldownTimerHandle, Ability3Cooldowns[Ability3Level], "Ability 3", true);
 }
 
 void ASLGod::UseAbility4()
 {
-	if (Ability4Level > 0)
-	{
-		if (GetWorld()->GetTimerManager().IsTimerActive(Ability4CooldownTimerHandle)) GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ultimate Ability is cooling down: %fs"), GetWorld()->GetTimerManager().GetTimerRemaining(Ability4CooldownTimerHandle)));
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("Ultimate Ability used!"));
-			GetWorld()->GetTimerManager().SetTimer(Ability4CooldownTimerHandle, Ability4Cooldowns[Ability4Level - 1] * (1 - CooldownReductionPercentage), false);
-		}
-	}
-	else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, TEXT("No points in Ultimate Ability."));
+	if (IsAbilityAvailable(Ability4CooldownTimerHandle, Ability4Level, "Ultimate Ability")) ActivateCooldownTimer(Ability4CooldownTimerHandle, Ability4Cooldowns[Ability4Level], "Ultimate Ability", true);
 }
 
 void ASLGod::LevelAbility1()
@@ -641,6 +617,29 @@ void ASLGod::ChangeBasicAttackTargeter()
 			CurrentAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[0], BasicAttackDisjointProgression[1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 2.5));
 		}
 	}
+}
+
+void ASLGod::ActivateCooldownTimer(FTimerHandle& CooldownTimer, float CooldownDuration, FString AbilityName, bool bUsesCDR)
+{
+	if (bUsesCDR) CooldownDuration *= (1 - CooldownReductionPercentage);
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s used!"), *AbilityName));
+	GetWorld()->GetTimerManager().SetTimer(CooldownTimer, CooldownDuration, false);
+}
+
+bool ASLGod::IsAbilityAvailable(FTimerHandle& CooldownTimer, int AbilityLevel, FString AbilityName)
+{
+	if (AbilityLevel > 0)
+	{
+		if (GetWorld()->GetTimerManager().IsTimerActive(CooldownTimer)) GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s is cooling down: %fs"), *AbilityName, GetWorld()->GetTimerManager().GetTimerRemaining(CooldownTimer)));
+		else return true;
+	}
+	else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("No points in %s."), *AbilityName));
+	return false;
+}
+
+void ASLGod::OnBasicAttackHit(TArray<ISLVulnerable*> Targets)
+{
+	return;
 }
 
 void ASLGod::TakeHealthDamage(float Val, ISLDangerous* Origin)

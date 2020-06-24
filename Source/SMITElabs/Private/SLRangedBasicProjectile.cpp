@@ -76,6 +76,7 @@ void ASLRangedBasicProjectile::OnOverlapBegin(UPrimitiveComponent* OverlappedCom
 			float TotalProtections = (DamagedTarget->GetMagicalProtections()) * (1 - Origin->GetPercentageMagicalPenetration()) - Origin->GetFlatMagicalPenetration() > 0 ? (DamagedTarget->GetMagicalProtections()) * (1 - Origin->GetPercentageMagicalPenetration()) - Origin->GetFlatMagicalPenetration() : 0;
 			DamagedTarget->TakeHealthDamage(((Origin->GetCurrentBasicAttackDamage() + Origin->GetMagicalPower() * Origin->GetBasicAttackPowerScaling()) * DamageProgressionMultiplier) * (100 / (TotalProtections + 100)), Origin);
 		}
+		TArray<ISLVulnerable*> Targets{ DamagedTarget };
 		if (bCleave)
 		{
 			CleaveCollisionComponent->SetWorldLocation(OtherActor->GetActorLocation());
@@ -99,10 +100,12 @@ void ASLRangedBasicProjectile::OnOverlapBegin(UPrimitiveComponent* OverlappedCom
 							float TotalProtections = (DamagedTarget->GetMagicalProtections()) * (1 - Origin->GetPercentageMagicalPenetration()) - Origin->GetFlatMagicalPenetration() > 0 ? (DamagedTarget->GetMagicalProtections()) * (1 - Origin->GetPercentageMagicalPenetration()) - Origin->GetFlatMagicalPenetration() : 0;
 							DamagedTarget->TakeHealthDamage(((Origin->GetCurrentBasicAttackDamage() + Origin->GetMagicalPower() * Origin->GetBasicAttackPowerScaling()) * DamageProgressionMultiplier * CleaveDamage) * (100 / (TotalProtections + 100)), Origin);
 						}
+						Targets.Add(DamagedTarget);
 					}
 				}
 			}
 		}
+		Origin->OnBasicAttackHit(Targets);
 		Destroy();
 	}
 }

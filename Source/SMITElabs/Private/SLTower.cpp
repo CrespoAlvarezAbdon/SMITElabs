@@ -116,6 +116,11 @@ bool ASLTower::GetIsPhysicalDamage() const
 	return bIsPhysicalDamage;
 }
 
+void ASLTower::OnBasicAttackHit(TArray<ISLVulnerable*> Targets)
+{
+	return;
+}
+
 float ASLTower::CalculateTotalProtections(ISLVulnerable* Targeted) const
 {
 	if (bIsPhysicalDamage) return (Targeted->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() > 0 ? (Targeted->GetPhysicalProtections()) * (1 - GetPercentagePhysicalPenetration()) - GetFlatPhysicalPenetration() : 0;

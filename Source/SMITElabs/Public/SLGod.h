@@ -91,13 +91,13 @@ public:
 
 	void MoveDiagonally(int ValX, int ValY);
 
-	void UseAbility1();
+	virtual void UseAbility1();
 
-	void UseAbility2();
+	virtual void UseAbility2();
 
-	void UseAbility3();
+	virtual void UseAbility3();
 
-	void UseAbility4();
+	virtual void UseAbility4();
 
 	void LevelAbility1();
 
@@ -105,7 +105,7 @@ public:
 
 	void LevelAbility3();
 
-	void LevelAbility4();
+	virtual void LevelAbility4();
 
 	void OnBeginJump();
 
@@ -136,6 +136,12 @@ public:
 	void FinishResetProgression();
 
 	void ChangeBasicAttackTargeter();
+
+	void ActivateCooldownTimer(FTimerHandle& CooldownTimer, float CooldownDuration, FString AbilityName, bool bUsesCDR);
+
+	bool IsAbilityAvailable(FTimerHandle& CooldownTimer, int AbilityLevel, FString AbilityName);
+
+	virtual void OnBasicAttackHit(TArray<ISLVulnerable*> Targets) override;
 
 	virtual void TakeHealthDamage(float Val, ISLDangerous* Origin) override;
 
