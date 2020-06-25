@@ -37,6 +37,8 @@ protected:
 
 	virtual void LevelAbility4() override;
 
+	virtual void AimAbility4() override;
+
 	void ConsumeCombustionStacks();
 
 	void CheckRainFireTimer();

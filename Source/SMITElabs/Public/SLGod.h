@@ -99,6 +99,14 @@ public:
 
 	virtual void UseAbility4();
 
+	void AimAbility1();
+
+	void AimAbility2();
+
+	void AimAbility3();
+
+	virtual void AimAbility4();
+
 	void LevelAbility1();
 
 	void LevelAbility2();
@@ -137,9 +145,14 @@ public:
 
 	void ChangeBasicAttackTargeter();
 
-	void ActivateCooldownTimer(FTimerHandle& CooldownTimer, float CooldownDuration, FString AbilityName, bool bUsesCDR);
+	UFUNCTION()
+	void SustainPerFive();
 
-	bool IsAbilityAvailable(FTimerHandle& CooldownTimer, int AbilityLevel, FString AbilityName);
+	void ActivateCooldownTimer(FTimerHandle& CooldownTimer, float CooldownDuration, FString AbilityName, float AbilityManaCost, bool bUsesCDR);
+
+	bool IsAbilityAvailable(FTimerHandle& CooldownTimer, int AbilityLevel, TArray<float> AbilityManaCost, FString AbilityName, bool bAbilityIsPrimed);
+
+	void CancelAbility();
 
 	virtual void OnBasicAttackHit(TArray<ISLVulnerable*> Targets) override;
 
@@ -201,6 +214,10 @@ protected:
 	FTimerHandle Ability3CooldownTimerHandle;
 
 	FTimerHandle Ability4CooldownTimerHandle;
+
+	FTimerHandle PerFiveTimerHandle;
+
+	FTimerDelegate PerFiveTimerDelegate;
 
 	FTimerHandle BasicAttackTimerHandle;
 
@@ -295,7 +312,7 @@ protected:
 	TArray<float> BasicAttackDamageProgression{ BasicAttackRefireProgression };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
-	TArray<float> BasicAttackDisjointProgression{ 156.25, 0, 156.25, 0, 156.25, 0 };
+	TArray<float> BasicAttackDisjointProgression{ 0, 0, 0, 0, 0, 0 };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<float> RangedBasicAttackProjectileSizeProgression{ 3, 3, 3 };
@@ -431,6 +448,31 @@ protected:
 	int Ability3Level{ 0 };
 	int Ability4Level{ 0 };
 
+	bool bAbility1IsPrimed{ false };
+	bool bAbility2IsPrimed{ false };
+	bool bAbility3IsPrimed{ false };
+	bool bAbility4IsPrimed{ false };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	float BaseMana{ 255 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	float CurrentMana{ 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	float MaxMana{ 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	float ManaPerLevel{ 45 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	float BaseManaPerFive{ 4.7 };
+
+	float CurrentManaPerFive{ 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	float ManaPerFivePerLevel{ .37 };
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
 	TArray<float> Ability1Cooldowns = { 12, 12, 12, 12, 12 };
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
@@ -448,8 +490,18 @@ protected:
 	TArray<float>  Ability3ManaCost = { 70, 75, 80, 85, 90 };
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
 	TArray<float>  Ability4ManaCost = { 0, 0, 0, 0, 0 };
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
+	TArray<UStaticMeshComponent*> Ability1TargeterComponents;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
+	TArray<UStaticMeshComponent*> Ability2TargeterComponents;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
+	TArray<UStaticMeshComponent*> Ability3TargeterComponents;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
+	TArray<UStaticMeshComponent*> Ability4TargeterComponents;
 
 #pragma endregion
+
 public:	
 
 	// Called to bind functionality to input

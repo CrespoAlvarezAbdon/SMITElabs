@@ -133,7 +133,7 @@ void ASLTower::BeginPlay()
 	Super::BeginPlay();
 
 	GetWorld()->GetTimerManager().SetTimer(FireTowerShotTimerHandle, BeginPlayTimerDelegate, .1, false);
-	if (bHasTowerHPS) GetWorld()->GetTimerManager().SetTimer(TowerHealthRegenTimerHandle, TowerHealthRegenTimerDelegate, 1, false);
+	if (bHasTowerHPS) GetWorld()->GetTimerManager().SetTimer(TowerHealthRegenTimerHandle, TowerHealthRegenTimerDelegate, 1, true);
 }
 
 void ASLTower::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit)
@@ -208,7 +208,6 @@ void ASLTower::FireTowerShot()
 
 void ASLTower::HealTower()
 {
-	GetWorld()->GetTimerManager().SetTimer(TowerHealthRegenTimerHandle, TowerHealthRegenTimerDelegate, 1, false);
 	float OriginalHealth = CurrentHealth;
 	if (CurrentHealth >= TowerMaxRegenHealth) return;
 	CurrentHealth += TowerHealthPerSecond;

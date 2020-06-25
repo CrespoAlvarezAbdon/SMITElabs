@@ -7,24 +7,36 @@
 // Sets default values
 ASLGod::ASLGod()
 {
+	GetCapsuleComponent()->SetCapsuleHalfHeight(312.5);
+	GetCapsuleComponent()->SetCapsuleRadius(156.25);
+
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
+	StaticMeshComponent->SetRelativeScale3D(FVector(3.125, 3.125, 6.250));
 	StaticMeshComponent->SetupAttachment(RootComponent);
 
 	RangeLineComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RangeLineComponent"));
+	RangeLineComponent->SetRelativeLocation(FVector(0, 0, (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
+	RangeLineComponent->SetRelativeScale3D(FVector(70, .5, .1));
 	RangeLineComponent->SetupAttachment(RootComponent);
-	RangeLineComponent->SetHiddenInGame(true);
+	RangeLineComponent->SetVisibility(false);
 
 	RangedAimComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RangedAimComponent"));
 	RangedAimComponent->SetupAttachment(RootComponent);
-	RangedAimComponent->SetHiddenInGame(true);
+	RangedAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[CurrentProgression * 2], BasicAttackDisjointProgression[CurrentProgression * 2 + 1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
+	RangedAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression], RangedBasicAttackProjectileSizeProgression[CurrentProgression], .1));
+	RangedAimComponent->SetVisibility(false);
 
 	MeleeAimComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeleeAimComponent"));
+	MeleeAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[CurrentProgression * 2], BasicAttackDisjointProgression[CurrentProgression * 2 + 1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
+	MeleeAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression], BasicAttackRangeProgression[CurrentProgression], .05));
 	MeleeAimComponent->SetupAttachment(RootComponent);
-	MeleeAimComponent->SetHiddenInGame(true);
+	MeleeAimComponent->SetVisibility(false);
 
 	AbilityAimComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("AbilityAimComponent"));
 	AbilityAimComponent->SetupAttachment(RootComponent);
-	AbilityAimComponent->SetHiddenInGame(true);
+	AbilityAimComponent->SetRelativeLocation(FVector(3700, 0, (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
+	AbilityAimComponent->SetRelativeScale3D(FVector(4, 4, .1));
+	AbilityAimComponent->SetVisibility(false);	
 
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
 	SpringArmComponent->SetupAttachment(RootComponent);
@@ -50,6 +62,7 @@ ASLGod::ASLGod()
 	JumpTimerDelegate.BindUFunction(this, FName("OnEndJump"), false);
 	ProgressionResetTimerDelegate.BindUFunction(this, FName("ResetProgression"), false);
 	FinishProgressionResetTimerDelegate.BindUFunction(this, FName("FinishResetProgression"), false);
+	PerFiveTimerDelegate.BindUFunction(this, FName("SustainPerFive"), false);
 }
 
 bool ASLGod::GetBIsOrder() const
@@ -114,16 +127,21 @@ void ASLGod::SetBaseStatistics()
 	CurrentBasicAttackDamage = BaseBasicAttackDamage + BasicAttackDamagePerLevel * GodLevel;
 	MaxHealth = BaseHealth + HealthPerLevel * GodLevel;
 	CurrentHealth = MaxHealth;
+	MaxMana = BaseMana + ManaPerLevel * GodLevel;
+	CurrentMana = MaxMana;
 	CurrentPhysicalProtections = BasePhysicalProtections + PhysicalProtectionsPerLevel * GodLevel;
 	CurrentMagicalProtections = BaseMagicalProtections + MagicalProtectionsPerLevel * GodLevel;
 	CurrentHealthPerFive = BaseHealthPerFive + HealthPerFivePerLevel * GodLevel;
+	CurrentManaPerFive = BaseManaPerFive + ManaPerFivePerLevel * GodLevel;
 	AbilityPoints = GodLevel;
 
 	if (this == UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("MP5: %f"), CurrentManaPerFive));
 		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("HP5: %f"), CurrentHealthPerFive));
 		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("Magical Protections: %f"), CurrentMagicalProtections));
 		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("Physical Protections: %f"), CurrentPhysicalProtections));
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("Max Mana: %f"), MaxMana));
 		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("Max Health: %f"), MaxHealth));
 		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("Basic Attack Damage: %f"), CurrentBasicAttackDamage));
 		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("Basic Attack Speed: %f"), CurrentBasicAttackSpeed));
@@ -193,17 +211,13 @@ void ASLGod::BeginPlay()
 	if (this == UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
 	{
 		PlayerController->SetControlRotation(FRotator(-35, 0, 0));
-
-		RangeLineComponent->SetHiddenInGame(false);
-		RangeLineComponent->SetRelativeLocation(FVector(0, 0, (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2));
-		RangeLineComponent->SetRelativeScale3D(FVector(70, .5, .05));
-
-		AbilityAimComponent->SetHiddenInGame(false);
-		AbilityAimComponent->SetRelativeLocation(FVector(3700, 0, (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2));
-		AbilityAimComponent->SetRelativeScale3D(FVector(4, 4, .1));
+		RangeLineComponent->SetVisibility(true);
+		AbilityAimComponent->SetVisibility(true);
 		
 		ResetProgression();
 	}
+
+	GetWorld()->GetTimerManager().SetTimer(PerFiveTimerHandle, PerFiveTimerDelegate, 1, true);
 }
 
 void ASLGod::LookUp(float Val)
@@ -298,22 +312,74 @@ void ASLGod::MoveDiagonally(int ValX, int ValY)
 
 void ASLGod::UseAbility1()
 {
-	if (IsAbilityAvailable(Ability1CooldownTimerHandle, Ability1Level, "Ability 1")) ActivateCooldownTimer(Ability1CooldownTimerHandle, Ability1Cooldowns[Ability1Level], "Ability 1", true);
+	if (IsAbilityAvailable(Ability1CooldownTimerHandle, Ability1Level, Ability1ManaCost, "Ability 1", bAbility1IsPrimed))
+		ActivateCooldownTimer(Ability1CooldownTimerHandle, Ability1Cooldowns[Ability1Level - 1], "Ability 1", Ability1ManaCost[Ability1Level - 1], true);
 }
 
 void ASLGod::UseAbility2()
 {
-	if (IsAbilityAvailable(Ability2CooldownTimerHandle, Ability2Level, "Ability 2")) ActivateCooldownTimer(Ability2CooldownTimerHandle, Ability2Cooldowns[Ability2Level], "Ability 2", true);
+	if (IsAbilityAvailable(Ability2CooldownTimerHandle, Ability2Level, Ability2ManaCost, "Ability 2", bAbility2IsPrimed))
+		ActivateCooldownTimer(Ability2CooldownTimerHandle, Ability2Cooldowns[Ability2Level - 1], "Ability 2", Ability2ManaCost[Ability2Level - 1], true);
 }
 
 void ASLGod::UseAbility3()
 {
-	if (IsAbilityAvailable(Ability3CooldownTimerHandle, Ability3Level, "Ability 3")) ActivateCooldownTimer(Ability3CooldownTimerHandle, Ability3Cooldowns[Ability3Level], "Ability 3", true);
+	if (IsAbilityAvailable(Ability3CooldownTimerHandle, Ability3Level, Ability3ManaCost, "Ability 3", bAbility3IsPrimed))
+		ActivateCooldownTimer(Ability3CooldownTimerHandle, Ability3Cooldowns[Ability3Level - 1], "Ability 3", Ability3ManaCost[Ability3Level - 1], true);
 }
 
 void ASLGod::UseAbility4()
 {
-	if (IsAbilityAvailable(Ability4CooldownTimerHandle, Ability4Level, "Ultimate Ability")) ActivateCooldownTimer(Ability4CooldownTimerHandle, Ability4Cooldowns[Ability4Level], "Ultimate Ability", true);
+	if (IsAbilityAvailable(Ability4CooldownTimerHandle, Ability4Level, Ability4ManaCost, "Ultimate Ability", bAbility4IsPrimed))
+		ActivateCooldownTimer(Ability4CooldownTimerHandle, Ability4Cooldowns[Ability4Level - 1], "Ultimate Ability", Ability4ManaCost[Ability4Level - 1], true);
+}
+
+void ASLGod::AimAbility1()
+{
+	if (!GetWorld()->GetTimerManager().IsTimerActive(Ability1CooldownTimerHandle) && Ability1Level > 0)
+	{
+		for (UStaticMeshComponent* SMC : Ability1TargeterComponents)
+		{
+			SMC->SetVisibility(true);
+			bAbility1IsPrimed = true;
+		}
+	}
+}
+
+void ASLGod::AimAbility2()
+{
+	if (!GetWorld()->GetTimerManager().IsTimerActive(Ability2CooldownTimerHandle) && Ability2Level > 0)
+	{
+		for (UStaticMeshComponent* SMC : Ability2TargeterComponents)
+		{
+			SMC->SetVisibility(true);
+			bAbility2IsPrimed = true;
+		}
+	}
+}
+
+void ASLGod::AimAbility3()
+{
+	if (!GetWorld()->GetTimerManager().IsTimerActive(Ability3CooldownTimerHandle) && Ability3Level > 0)
+	{
+		for (UStaticMeshComponent* SMC : Ability3TargeterComponents)
+		{
+			SMC->SetVisibility(true);
+			bAbility3IsPrimed = true;
+		}
+	}
+}
+
+void ASLGod::AimAbility4()
+{
+	if (!GetWorld()->GetTimerManager().IsTimerActive(Ability4CooldownTimerHandle) && Ability4Level > 0)
+	{
+		for (UStaticMeshComponent* SMC : Ability4TargeterComponents)
+		{
+			SMC->SetVisibility(true);
+			bAbility4IsPrimed = true;
+		}
+	}
 }
 
 void ASLGod::LevelAbility1()
@@ -487,8 +553,6 @@ void ASLGod::FireRangedBasicAttack()
 
 void ASLGod::FireMeleeBasicAttack()
 {
-	// I know there's a cleaner and more efficient way of doing this since I'm current doing the check twice, but it will do for now, will do something about the repeating damage code later
-
 	TArray<AActor*> OverlappingActors;
 	MeleeAimComponent->GetOverlappingActors(OverlappingActors);
 	float ShortestDistance{ -1 };
@@ -496,7 +560,7 @@ void ASLGod::FireMeleeBasicAttack()
 	for (AActor* var : OverlappingActors)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s"), *var->GetName()));
-		if (Cast<ISLVulnerable>(var) && var != this)
+		if (Cast<ISLVulnerable>(var) && var != this && Cast<ISLIdentifiable>(var)->GetBIsOrder() != bIsOrder)
 		{
 			if (FVector::Dist2D(this->GetActorLocation(), var->GetActorLocation()) < ShortestDistance || ShortestDistance == -1)
 			{
@@ -524,7 +588,7 @@ void ASLGod::FireMeleeBasicAttack()
 		{
 			for (AActor* var : OverlappingActors)
 			{
-				if (Cast<ISLVulnerable>(var) && var != this && Cast<ISLVulnerable>(var) != CurrentTarget)
+				if (Cast<ISLVulnerable>(var) && var != this && Cast<ISLVulnerable>(var) != CurrentTarget && Cast<ISLIdentifiable>(var)->GetBIsOrder() != bIsOrder)
 				{
 					FHitResult HitResult;
 					if (!GetWorld()->LineTraceSingleByChannel(HitResult, this->GetActorLocation(), var->GetActorLocation(), ECollisionChannel::ECC_GameTraceChannel1))
@@ -552,18 +616,18 @@ void ASLGod::ResetProgression()
 	CurrentProgression = 0;
 	if (bIsBasicAttackRangedProgression[CurrentProgression])
 	{
-		RangedAimComponent->SetHiddenInGame(false);
-		RangedAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression], RangedBasicAttackProjectileSizeProgression[CurrentProgression], .05));
-		RangedAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[CurrentProgression * 2], BasicAttackDisjointProgression[CurrentProgression * 2 + 1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2));
-		MeleeAimComponent->SetHiddenInGame(true);
+		RangedAimComponent->SetVisibility(true);
+		RangedAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression], RangedBasicAttackProjectileSizeProgression[CurrentProgression], .1));
+		RangedAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[CurrentProgression * 2], BasicAttackDisjointProgression[CurrentProgression * 2 + 1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
+		MeleeAimComponent->SetVisibility(false);
 		CurrentAimComponent = RangedAimComponent;
 	}
 	else
 	{
-		MeleeAimComponent->SetHiddenInGame(false);
-		MeleeAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression], BasicAttackRangeProgression[CurrentProgression], .025));
-		MeleeAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[CurrentProgression * 2], BasicAttackDisjointProgression[CurrentProgression * 2 + 1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 2.5));
-		RangedAimComponent->SetHiddenInGame(true);
+		MeleeAimComponent->SetVisibility(true);
+		MeleeAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression], BasicAttackRangeProgression[CurrentProgression], .05));
+		MeleeAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[CurrentProgression * 2], BasicAttackDisjointProgression[CurrentProgression * 2 + 1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
+		RangedAimComponent->SetVisibility(false);
 		CurrentAimComponent = MeleeAimComponent;
 	}
 	if (bInitialProgressionReset) bInitialProgressionReset = false;
@@ -586,55 +650,111 @@ void ASLGod::ChangeBasicAttackTargeter()
 {
 	if (CurrentProgression < bIsBasicAttackRangedProgression.Num() - 1)
 	{
-		if (bIsBasicAttackRangedProgression[CurrentProgression + 1]) { CurrentAimComponent = RangedAimComponent; RangedAimComponent->SetHiddenInGame(false); MeleeAimComponent->SetHiddenInGame(true); }
-		else { CurrentAimComponent = MeleeAimComponent; RangedAimComponent->SetHiddenInGame(true); MeleeAimComponent->SetHiddenInGame(false); }
+		if (bIsBasicAttackRangedProgression[CurrentProgression + 1]) { CurrentAimComponent = RangedAimComponent; RangedAimComponent->SetVisibility(true); MeleeAimComponent->SetVisibility(false); }
+		else { CurrentAimComponent = MeleeAimComponent; RangedAimComponent->SetVisibility(false); MeleeAimComponent->SetVisibility(true); }
 	}
-	else if (bIsBasicAttackRangedProgression[0]) { CurrentAimComponent = RangedAimComponent; RangedAimComponent->SetHiddenInGame(false); MeleeAimComponent->SetHiddenInGame(true); }
-	else { CurrentAimComponent = MeleeAimComponent; RangedAimComponent->SetHiddenInGame(true); MeleeAimComponent->SetHiddenInGame(false); }
+	else if (bIsBasicAttackRangedProgression[0]) { CurrentAimComponent = RangedAimComponent; RangedAimComponent->SetVisibility(true); MeleeAimComponent->SetVisibility(false); }
+	else { CurrentAimComponent = MeleeAimComponent; RangedAimComponent->SetVisibility(false); MeleeAimComponent->SetVisibility(true); }
 	if (CurrentAimComponent == RangedAimComponent)
 	{
 		if (CurrentProgression < BasicAttackRefireProgression.Num() - 1)
 		{
-			CurrentAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression + 1], RangedBasicAttackProjectileSizeProgression[CurrentProgression + 1], .05));
-			CurrentAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[(CurrentProgression + 1) * 2], BasicAttackDisjointProgression[(CurrentProgression + 1) * 2 + 1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2));
+			CurrentAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression + 1], RangedBasicAttackProjectileSizeProgression[CurrentProgression + 1], .1));
+			CurrentAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[(CurrentProgression + 1) * 2], BasicAttackDisjointProgression[(CurrentProgression + 1) * 2 + 1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
 		}
 		else
 		{
-			CurrentAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[0], RangedBasicAttackProjectileSizeProgression[0], .05));
-			CurrentAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[0], BasicAttackDisjointProgression[1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2));
+			CurrentAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[0], RangedBasicAttackProjectileSizeProgression[0], .1));
+			CurrentAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[0], BasicAttackDisjointProgression[1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
 		}
 	}
 	else if (CurrentAimComponent == MeleeAimComponent)
 	{
 		if (CurrentProgression < BasicAttackRefireProgression.Num() - 1)
 		{
-			CurrentAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression + 1], BasicAttackRangeProgression[CurrentProgression + 1], .025));
-			CurrentAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[(CurrentProgression + 1) * 2], BasicAttackDisjointProgression[(CurrentProgression + 1) * 2 + 1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 2.5));
+			CurrentAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression + 1], BasicAttackRangeProgression[CurrentProgression + 1], .05));
+			CurrentAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[(CurrentProgression + 1) * 2], BasicAttackDisjointProgression[(CurrentProgression + 1) * 2 + 1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
 		}
 		else
 		{
-			CurrentAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[0], BasicAttackRangeProgression[0], .025));
-			CurrentAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[0], BasicAttackDisjointProgression[1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 2.5));
+			CurrentAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[0], BasicAttackRangeProgression[0], .05));
+			CurrentAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[0], BasicAttackDisjointProgression[1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
 		}
 	}
 }
 
-void ASLGod::ActivateCooldownTimer(FTimerHandle& CooldownTimer, float CooldownDuration, FString AbilityName, bool bUsesCDR)
+void ASLGod::SustainPerFive()
+{
+	if (CurrentHealth + CurrentHealthPerFive / 5 <= MaxHealth) CurrentHealth += CurrentHealthPerFive / 5;
+	else if (CurrentHealth != MaxHealth) CurrentHealth = MaxHealth;
+	if (CurrentMana + CurrentManaPerFive / 5 <= MaxMana) CurrentMana += CurrentManaPerFive / 5;
+	else if (CurrentMana != MaxMana) CurrentMana = MaxMana;
+}
+
+void ASLGod::ActivateCooldownTimer(FTimerHandle& CooldownTimer, float CooldownDuration, FString AbilityName, float AbilityManaCost, bool bUsesCDR)
 {
 	if (bUsesCDR) CooldownDuration *= (1 - CooldownReductionPercentage);
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s used!"), *AbilityName));
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s used! Mana Cost : %i [%i -> %i]"), *AbilityName, (int)AbilityManaCost, (int)CurrentMana, (int)CurrentMana - (int)AbilityManaCost));
+	CurrentMana -= AbilityManaCost;
 	GetWorld()->GetTimerManager().SetTimer(CooldownTimer, CooldownDuration, false);
 }
 
-bool ASLGod::IsAbilityAvailable(FTimerHandle& CooldownTimer, int AbilityLevel, FString AbilityName)
+bool ASLGod::IsAbilityAvailable(FTimerHandle& CooldownTimer, int AbilityLevel, TArray<float> AbilityManaCost, FString AbilityName, bool bAbilityIsPrimed)
 {
-	if (AbilityLevel > 0)
+	if (bAbilityIsPrimed)
 	{
-		if (GetWorld()->GetTimerManager().IsTimerActive(CooldownTimer)) GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s is cooling down: %fs"), *AbilityName, GetWorld()->GetTimerManager().GetTimerRemaining(CooldownTimer)));
-		else return true;
+		if (AbilityLevel > 0)
+		{
+			if (!GetWorld()->GetTimerManager().IsTimerActive(CooldownTimer))
+			{
+				if ((int)CurrentMana >= (int)AbilityManaCost[AbilityLevel - 1]) return true;
+				else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Insufficient Mana [%i < %i]"), (int)CurrentMana, (int)AbilityManaCost[AbilityLevel - 1]));
+			}
+			else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s is cooling down: %fs"), *AbilityName, GetWorld()->GetTimerManager().GetTimerRemaining(CooldownTimer)));
+		}
+		else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("No points in %s."), *AbilityName));
 	}
-	else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("No points in %s."), *AbilityName));
 	return false;
+}
+
+void ASLGod::CancelAbility()
+{
+	if (bAbility1IsPrimed == true)
+	{
+		bAbility1IsPrimed = false;
+		for (UStaticMeshComponent* SMC : Ability1TargeterComponents)
+		{
+			SMC->SetVisibility(false);
+			return;
+		}
+	}
+	if (bAbility2IsPrimed == true)
+	{
+		bAbility2IsPrimed = false;
+		for (UStaticMeshComponent* SMC : Ability2TargeterComponents)
+		{
+			SMC->SetVisibility(false);
+			return;
+		}
+	}
+	if (bAbility3IsPrimed == true)
+	{
+		bAbility3IsPrimed = false;
+		for (UStaticMeshComponent* SMC : Ability3TargeterComponents)
+		{
+			SMC->SetVisibility(false);
+			return;
+		}
+	}
+	if (bAbility4IsPrimed == true)
+	{
+		bAbility4IsPrimed = false;
+		for (UStaticMeshComponent* SMC : Ability4TargeterComponents)
+		{
+			SMC->SetVisibility(false);
+			return;
+		}
+	}
 }
 
 void ASLGod::OnBasicAttackHit(TArray<ISLVulnerable*> Targets)
@@ -665,10 +785,17 @@ void ASLGod::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAxis("MoveForward", this, &ASLGod::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ASLGod::MoveRight);
 
+	PlayerInputComponent->BindAction("Ability1", IE_Pressed, this, &ASLGod::AimAbility1);
+	PlayerInputComponent->BindAction("Ability2", IE_Pressed, this, &ASLGod::AimAbility2);
+	PlayerInputComponent->BindAction("Ability3", IE_Pressed, this, &ASLGod::AimAbility3);
+	PlayerInputComponent->BindAction("Ability4", IE_Pressed, this, &ASLGod::AimAbility4);
+
 	PlayerInputComponent->BindAction("Ability1", IE_Released, this, &ASLGod::UseAbility1);
 	PlayerInputComponent->BindAction("Ability2", IE_Released, this, &ASLGod::UseAbility2);
 	PlayerInputComponent->BindAction("Ability3", IE_Released, this, &ASLGod::UseAbility3);
 	PlayerInputComponent->BindAction("Ability4", IE_Released, this, &ASLGod::UseAbility4);
+
+	PlayerInputComponent->BindAction("CancelAbility", IE_Pressed, this, &ASLGod::CancelAbility);
 
 	PlayerInputComponent->BindAction("LevelAbility1", IE_Pressed, this, &ASLGod::LevelAbility1);
 	PlayerInputComponent->BindAction("LevelAbility2", IE_Pressed, this, &ASLGod::LevelAbility2);
