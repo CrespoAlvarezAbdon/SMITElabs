@@ -453,6 +453,20 @@ protected:
 	bool bAbility3IsPrimed{ false };
 	bool bAbility4IsPrimed{ false };
 
+	float Ability1Range{ 0 };
+	float Ability2Range{ 0 };
+	float Ability3Range{ 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	float Ability4Range{ 0 };
+
+	float CurrentMaxRange{ 7000 };
+
+	bool bAbility1FollowsGroundTargeter{ false };
+	bool bAbility2FollowsGroundTargeter{ false };
+	bool bAbility3FollowsGroundTargeter{ false };
+	bool bAbility4FollowsGroundTargeter{ false };
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	float BaseMana{ 255 };
 

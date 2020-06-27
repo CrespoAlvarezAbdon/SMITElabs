@@ -44,6 +44,8 @@ ASLAgni::ASLAgni()
 	Ability1TargeterComponents.Add(CreateDefaultSubobject<UStaticMeshComponent>(TEXT("NoxiousFumesTargeter")));
 	Ability1TargeterComponents[0]->SetupAttachment(AbilityAimComponent);
 	Ability1TargeterComponents[0]->SetVisibility(false);
+	bAbility1FollowsGroundTargeter = true;
+	Ability1Range = 55;
 
 	Ability2TargeterComponents.Add(CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FlameWaveTargeter")));
 	Ability2TargeterComponents[0]->SetupAttachment(RootComponent);
@@ -56,6 +58,8 @@ ASLAgni::ASLAgni()
 	Ability4TargeterComponents.Add(CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RainFireTargeter")));
 	Ability4TargeterComponents[0]->SetupAttachment(AbilityAimComponent);
 	Ability4TargeterComponents[0]->SetVisibility(false);
+	bAbility4FollowsGroundTargeter = true;
+	Ability4Range = 65;
 
 	RainFireTimerDelegate.BindUFunction(this, FName("AddUltCharge"), false);
 }
@@ -77,6 +81,7 @@ void ASLAgni::OnBasicAttackHit(TArray<ISLVulnerable*> Targets)
 
 void ASLAgni::UseAbility1()
 {
+	CurrentMaxRange = 7000;
 	Ability1TargeterComponents[0]->SetVisibility(false);
 	if (!IsAbilityAvailable(Ability1CooldownTimerHandle, Ability1Level, Ability1ManaCost, "Noxious Fumes [1]", bAbility1IsPrimed)) return;
 	ActivateCooldownTimer(Ability1CooldownTimerHandle, Ability1Cooldowns[Ability1Level - 1], "Noxious Fumes [1]", Ability1ManaCost[Ability1Level - 1], true);
@@ -84,6 +89,7 @@ void ASLAgni::UseAbility1()
 
 void ASLAgni::UseAbility2()
 {
+	CurrentMaxRange = 7000;
 	Ability2TargeterComponents[0]->SetVisibility(false);
 	if (!IsAbilityAvailable(Ability2CooldownTimerHandle, Ability2Level, Ability2ManaCost, "Flame Wave [2]", bAbility2IsPrimed)) return;
 	if (CombustionCount >= 4)
@@ -96,6 +102,7 @@ void ASLAgni::UseAbility2()
 
 void ASLAgni::UseAbility3()
 {
+	CurrentMaxRange = 7000;
 	Ability3TargeterComponents[0]->SetVisibility(false);
 	if (!IsAbilityAvailable(Ability3CooldownTimerHandle, Ability3Level, Ability3ManaCost, "Path of Flames [3]", bAbility3IsPrimed)) return;
 	ActivateCooldownTimer(Ability3CooldownTimerHandle, Ability3Cooldowns[Ability3Level - 1], "Path of Flames [3]", Ability3ManaCost[Ability3Level - 1], true);
@@ -116,6 +123,8 @@ void ASLAgni::UseAbility4()
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Rain Fire has no charges available for %fs."), GetWorld()->GetTimerManager().GetTimerRemaining(Ability4CooldownTimerHandle)));
 		return;
 	}
+
+	CurrentMaxRange = 7000;
 
 	if (CombustionCount >= 4)
 	{
@@ -142,6 +151,7 @@ void ASLAgni::AimAbility4()
 			SMC->SetVisibility(true);
 			bAbility4IsPrimed = true;
 		}
+		if (bAbility4FollowsGroundTargeter) CurrentMaxRange = Ability4Range * 100;
 	}
 }
 

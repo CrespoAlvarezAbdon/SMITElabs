@@ -245,7 +245,7 @@ void ASLGod::LookUp(float Val)
 	GetWorld()->LineTraceSingleByChannel(HitResult, CameraComponent->GetComponentLocation(), CameraComponent->GetComponentLocation() + PlayerController->GetControlRotation().Vector() * 100000, ECollisionChannel::ECC_GameTraceChannel2);
 
 	AbilityAimComponent->SetWorldLocation(FVector(HitResult.ImpactPoint.X, HitResult.ImpactPoint.Y, HitResult.ImpactPoint.Z + 5));
-	if (AbilityAimComponent->GetRelativeLocation().X > 7000 || HitResult.ImpactPoint == FVector::ZeroVector) AbilityAimComponent->SetRelativeLocation(FVector(7000, 0, AbilityAimComponent->GetRelativeLocation().Z));
+	if (AbilityAimComponent->GetRelativeLocation().X > CurrentMaxRange || HitResult.ImpactPoint == FVector::ZeroVector) AbilityAimComponent->SetRelativeLocation(FVector(CurrentMaxRange, 0, AbilityAimComponent->GetRelativeLocation().Z));
 	AbilityAimComponent->SetRelativeScale3D(FVector(AbilityAimComponent->GetRelativeLocation().X / (7000 / 4) + 4, AbilityAimComponent->GetRelativeLocation().X / (7000 / 4) + 4, AbilityAimComponent->GetRelativeScale3D().Z));
 }
 
@@ -312,26 +312,38 @@ void ASLGod::MoveDiagonally(int ValX, int ValY)
 
 void ASLGod::UseAbility1()
 {
+	CurrentMaxRange = 7000;
 	if (IsAbilityAvailable(Ability1CooldownTimerHandle, Ability1Level, Ability1ManaCost, "Ability 1", bAbility1IsPrimed))
+	{
 		ActivateCooldownTimer(Ability1CooldownTimerHandle, Ability1Cooldowns[Ability1Level - 1], "Ability 1", Ability1ManaCost[Ability1Level - 1], true);
+	}
 }
 
 void ASLGod::UseAbility2()
 {
+	CurrentMaxRange = 7000;
 	if (IsAbilityAvailable(Ability2CooldownTimerHandle, Ability2Level, Ability2ManaCost, "Ability 2", bAbility2IsPrimed))
+	{
 		ActivateCooldownTimer(Ability2CooldownTimerHandle, Ability2Cooldowns[Ability2Level - 1], "Ability 2", Ability2ManaCost[Ability2Level - 1], true);
+	}
 }
 
 void ASLGod::UseAbility3()
 {
+	CurrentMaxRange = 7000;
 	if (IsAbilityAvailable(Ability3CooldownTimerHandle, Ability3Level, Ability3ManaCost, "Ability 3", bAbility3IsPrimed))
+	{
 		ActivateCooldownTimer(Ability3CooldownTimerHandle, Ability3Cooldowns[Ability3Level - 1], "Ability 3", Ability3ManaCost[Ability3Level - 1], true);
+	}
 }
 
 void ASLGod::UseAbility4()
 {
+	CurrentMaxRange = 7000;
 	if (IsAbilityAvailable(Ability4CooldownTimerHandle, Ability4Level, Ability4ManaCost, "Ultimate Ability", bAbility4IsPrimed))
+	{
 		ActivateCooldownTimer(Ability4CooldownTimerHandle, Ability4Cooldowns[Ability4Level - 1], "Ultimate Ability", Ability4ManaCost[Ability4Level - 1], true);
+	}
 }
 
 void ASLGod::AimAbility1()
@@ -343,6 +355,7 @@ void ASLGod::AimAbility1()
 			SMC->SetVisibility(true);
 			bAbility1IsPrimed = true;
 		}
+		if (bAbility1FollowsGroundTargeter) CurrentMaxRange = Ability1Range * 100;
 	}
 }
 
@@ -355,6 +368,7 @@ void ASLGod::AimAbility2()
 			SMC->SetVisibility(true);
 			bAbility2IsPrimed = true;
 		}
+		if (bAbility2FollowsGroundTargeter) CurrentMaxRange = Ability2Range * 100;
 	}
 }
 
@@ -367,6 +381,7 @@ void ASLGod::AimAbility3()
 			SMC->SetVisibility(true);
 			bAbility3IsPrimed = true;
 		}
+		if (bAbility3FollowsGroundTargeter) CurrentMaxRange = Ability3Range * 100;
 	}
 }
 
@@ -379,6 +394,7 @@ void ASLGod::AimAbility4()
 			SMC->SetVisibility(true);
 			bAbility4IsPrimed = true;
 		}
+		if (bAbility4FollowsGroundTargeter) CurrentMaxRange = Ability4Range * 100;
 	}
 }
 
@@ -725,8 +741,9 @@ void ASLGod::CancelAbility()
 		for (UStaticMeshComponent* SMC : Ability1TargeterComponents)
 		{
 			SMC->SetVisibility(false);
-			return;
 		}
+		CurrentMaxRange = 7000;
+		return;
 	}
 	if (bAbility2IsPrimed == true)
 	{
@@ -734,8 +751,9 @@ void ASLGod::CancelAbility()
 		for (UStaticMeshComponent* SMC : Ability2TargeterComponents)
 		{
 			SMC->SetVisibility(false);
-			return;
 		}
+		CurrentMaxRange = 7000;
+		return;
 	}
 	if (bAbility3IsPrimed == true)
 	{
@@ -743,8 +761,9 @@ void ASLGod::CancelAbility()
 		for (UStaticMeshComponent* SMC : Ability3TargeterComponents)
 		{
 			SMC->SetVisibility(false);
-			return;
 		}
+		CurrentMaxRange = 7000;
+		return;
 	}
 	if (bAbility4IsPrimed == true)
 	{
@@ -752,8 +771,9 @@ void ASLGod::CancelAbility()
 		for (UStaticMeshComponent* SMC : Ability4TargeterComponents)
 		{
 			SMC->SetVisibility(false);
-			return;
 		}
+		CurrentMaxRange = 7000;
+		return;
 	}
 }
 
