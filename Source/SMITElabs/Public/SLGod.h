@@ -91,30 +91,6 @@ public:
 
 	void MoveDiagonally(int ValX, int ValY);
 
-	virtual void UseAbility1();
-
-	virtual void UseAbility2();
-
-	virtual void UseAbility3();
-
-	virtual void UseAbility4();
-
-	void AimAbility1();
-
-	void AimAbility2();
-
-	void AimAbility3();
-
-	virtual void AimAbility4();
-
-	void LevelAbility1();
-
-	void LevelAbility2();
-
-	void LevelAbility3();
-
-	virtual void LevelAbility4();
-
 	void OnBeginJump();
 
 	UFUNCTION()
@@ -147,12 +123,6 @@ public:
 
 	UFUNCTION()
 	void SustainPerFive();
-
-	void ActivateCooldownTimer(FTimerHandle& CooldownTimer, float CooldownDuration, FString AbilityName, float AbilityManaCost, bool bUsesCDR);
-
-	bool IsAbilityAvailable(FTimerHandle& CooldownTimer, int AbilityLevel, TArray<float> AbilityManaCost, FString AbilityName, bool bAbilityIsPrimed);
-
-	void CancelAbility();
 
 	virtual void OnBasicAttackHit(TArray<ISLVulnerable*> Targets) override;
 
@@ -400,6 +370,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float BaseMovementSpeed{ 360 };
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float MovementSpeedPerLevel{ 0 };
+
 	float UndiminishedMovementSpeed{ 0 };
 
 	float DiminishedMovementSpeed{ 0 };
@@ -412,8 +385,10 @@ protected:
 
 	const float MaximumDiminishedMovementSpeed{ 753.55 };
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float StrafePenalty{ 0.8 };
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float BackpedalPenalty{ 0.6 };
 
 	bool bIsJumping{ false };
@@ -443,29 +418,11 @@ protected:
 
 	int AbilityPoints{ 0 };
 
-	int Ability1Level{ 0 };
-	int Ability2Level{ 0 };
-	int Ability3Level{ 0 };
-	int Ability4Level{ 0 };
+	int AbilitySlotPoints[4] = { 0, 0, 0, 0 };
 
-	bool bAbility1IsPrimed{ false };
-	bool bAbility2IsPrimed{ false };
-	bool bAbility3IsPrimed{ false };
-	bool bAbility4IsPrimed{ false };
+	float BaseMaxTargeterRange{ 7000 };
 
-	float Ability1Range{ 0 };
-	float Ability2Range{ 0 };
-	float Ability3Range{ 0 };
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
-	float Ability4Range{ 0 };
-
-	float CurrentMaxRange{ 7000 };
-
-	bool bAbility1FollowsGroundTargeter{ false };
-	bool bAbility2FollowsGroundTargeter{ false };
-	bool bAbility3FollowsGroundTargeter{ false };
-	bool bAbility4FollowsGroundTargeter{ false };
+	float CurrentMaxTargeterRange{ BaseMaxTargeterRange };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	float BaseMana{ 255 };
@@ -486,33 +443,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	float ManaPerFivePerLevel{ .37 };
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
-	TArray<float> Ability1Cooldowns = { 12, 12, 12, 12, 12 };
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
-	TArray<float>  Ability2Cooldowns = { 15, 14, 13, 12, 11 };
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
-	TArray<float>  Ability3Cooldowns = { 15, 15, 15, 15, 15 };
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
-	TArray<float>  Ability4Cooldowns = { 18, 18, 18, 18, 18 };
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
-	TArray<float>  Ability1ManaCost = { 60, 65, 70, 75, 80 };
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
-	TArray<float>  Ability2ManaCost = { 60, 70, 80, 90, 100 };
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
-	TArray<float>  Ability3ManaCost = { 70, 75, 80, 85, 90 };
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, EditFixedSize, Category = "Ability")
-	TArray<float>  Ability4ManaCost = { 0, 0, 0, 0, 0 };
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
-	TArray<UStaticMeshComponent*> Ability1TargeterComponents;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
-	TArray<UStaticMeshComponent*> Ability2TargeterComponents;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
-	TArray<UStaticMeshComponent*> Ability3TargeterComponents;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
-	TArray<UStaticMeshComponent*> Ability4TargeterComponents;
+	TArray<UStaticMeshComponent*> AbilityTargeterComponents;
 
 #pragma endregion
 

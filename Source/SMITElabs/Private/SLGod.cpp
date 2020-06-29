@@ -113,16 +113,12 @@ void ASLGod::SetBasicAttackSpeed(float Val)
 void ASLGod::SetGodLevel(int Val)
 {
 	GodLevel = Val;
-	Ability1Level = 0;
-	Ability2Level = 0;
-	Ability3Level = 0;
-	Ability4Level = 0;
 	SetBaseStatistics();
 }
 
 void ASLGod::SetBaseStatistics()
 {
-	SetMovementSpeed(BaseMovementSpeed);
+	SetMovementSpeed(BaseMovementSpeed + MovementSpeedPerLevel * GodLevel);
 	CurrentBasicAttackSpeed = BaseBasicAttackSpeed + (BaseBasicAttackSpeed * BasicAttackSpeedPerLevel) * GodLevel;
 	CurrentBasicAttackDamage = BaseBasicAttackDamage + BasicAttackDamagePerLevel * GodLevel;
 	MaxHealth = BaseHealth + HealthPerLevel * GodLevel;
@@ -245,7 +241,7 @@ void ASLGod::LookUp(float Val)
 	GetWorld()->LineTraceSingleByChannel(HitResult, CameraComponent->GetComponentLocation(), CameraComponent->GetComponentLocation() + PlayerController->GetControlRotation().Vector() * 100000, ECollisionChannel::ECC_GameTraceChannel2);
 
 	AbilityAimComponent->SetWorldLocation(FVector(HitResult.ImpactPoint.X, HitResult.ImpactPoint.Y, HitResult.ImpactPoint.Z + 5));
-	if (AbilityAimComponent->GetRelativeLocation().X > CurrentMaxRange || HitResult.ImpactPoint == FVector::ZeroVector) AbilityAimComponent->SetRelativeLocation(FVector(CurrentMaxRange, 0, AbilityAimComponent->GetRelativeLocation().Z));
+	if (AbilityAimComponent->GetRelativeLocation().X > CurrentMaxTargeterRange || HitResult.ImpactPoint == FVector::ZeroVector) AbilityAimComponent->SetRelativeLocation(FVector(CurrentMaxTargeterRange, 0, AbilityAimComponent->GetRelativeLocation().Z));
 	AbilityAimComponent->SetRelativeScale3D(FVector(AbilityAimComponent->GetRelativeLocation().X / (7000 / 4) + 4, AbilityAimComponent->GetRelativeLocation().X / (7000 / 4) + 4, AbilityAimComponent->GetRelativeScale3D().Z));
 }
 
@@ -308,170 +304,6 @@ void ASLGod::MoveDiagonally(int ValX, int ValY)
 	FVector Vec = FVector(StaticMeshComponent->GetForwardVector() * ValX + StaticMeshComponent->GetRightVector() * ValY);
 	Vec.Normalize();
 	AddMovementInput(Vec, Val);
-}
-
-void ASLGod::UseAbility1()
-{
-	CurrentMaxRange = 7000;
-	if (IsAbilityAvailable(Ability1CooldownTimerHandle, Ability1Level, Ability1ManaCost, "Ability 1", bAbility1IsPrimed))
-	{
-		ActivateCooldownTimer(Ability1CooldownTimerHandle, Ability1Cooldowns[Ability1Level - 1], "Ability 1", Ability1ManaCost[Ability1Level - 1], true);
-	}
-}
-
-void ASLGod::UseAbility2()
-{
-	CurrentMaxRange = 7000;
-	if (IsAbilityAvailable(Ability2CooldownTimerHandle, Ability2Level, Ability2ManaCost, "Ability 2", bAbility2IsPrimed))
-	{
-		ActivateCooldownTimer(Ability2CooldownTimerHandle, Ability2Cooldowns[Ability2Level - 1], "Ability 2", Ability2ManaCost[Ability2Level - 1], true);
-	}
-}
-
-void ASLGod::UseAbility3()
-{
-	CurrentMaxRange = 7000;
-	if (IsAbilityAvailable(Ability3CooldownTimerHandle, Ability3Level, Ability3ManaCost, "Ability 3", bAbility3IsPrimed))
-	{
-		ActivateCooldownTimer(Ability3CooldownTimerHandle, Ability3Cooldowns[Ability3Level - 1], "Ability 3", Ability3ManaCost[Ability3Level - 1], true);
-	}
-}
-
-void ASLGod::UseAbility4()
-{
-	CurrentMaxRange = 7000;
-	if (IsAbilityAvailable(Ability4CooldownTimerHandle, Ability4Level, Ability4ManaCost, "Ultimate Ability", bAbility4IsPrimed))
-	{
-		ActivateCooldownTimer(Ability4CooldownTimerHandle, Ability4Cooldowns[Ability4Level - 1], "Ultimate Ability", Ability4ManaCost[Ability4Level - 1], true);
-	}
-}
-
-void ASLGod::AimAbility1()
-{
-	if (!GetWorld()->GetTimerManager().IsTimerActive(Ability1CooldownTimerHandle) && Ability1Level > 0)
-	{
-		for (UStaticMeshComponent* SMC : Ability1TargeterComponents)
-		{
-			SMC->SetVisibility(true);
-			bAbility1IsPrimed = true;
-		}
-		if (bAbility1FollowsGroundTargeter) CurrentMaxRange = Ability1Range * 100;
-	}
-}
-
-void ASLGod::AimAbility2()
-{
-	if (!GetWorld()->GetTimerManager().IsTimerActive(Ability2CooldownTimerHandle) && Ability2Level > 0)
-	{
-		for (UStaticMeshComponent* SMC : Ability2TargeterComponents)
-		{
-			SMC->SetVisibility(true);
-			bAbility2IsPrimed = true;
-		}
-		if (bAbility2FollowsGroundTargeter) CurrentMaxRange = Ability2Range * 100;
-	}
-}
-
-void ASLGod::AimAbility3()
-{
-	if (!GetWorld()->GetTimerManager().IsTimerActive(Ability3CooldownTimerHandle) && Ability3Level > 0)
-	{
-		for (UStaticMeshComponent* SMC : Ability3TargeterComponents)
-		{
-			SMC->SetVisibility(true);
-			bAbility3IsPrimed = true;
-		}
-		if (bAbility3FollowsGroundTargeter) CurrentMaxRange = Ability3Range * 100;
-	}
-}
-
-void ASLGod::AimAbility4()
-{
-	if (!GetWorld()->GetTimerManager().IsTimerActive(Ability4CooldownTimerHandle) && Ability4Level > 0)
-	{
-		for (UStaticMeshComponent* SMC : Ability4TargeterComponents)
-		{
-			SMC->SetVisibility(true);
-			bAbility4IsPrimed = true;
-		}
-		if (bAbility4FollowsGroundTargeter) CurrentMaxRange = Ability4Range * 100;
-	}
-}
-
-void ASLGod::LevelAbility1()
-{
-	if (AbilityPoints > 0)
-	{
-		if (Ability1Level < 5)
-		{
-			if (Ability1Level < (float)GodLevel / 2)
-			{
-				++Ability1Level;
-				--AbilityPoints;
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability 1 is now Level %i! You have %i Ability Points left."), Ability1Level, AbilityPoints));
-			}
-			else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Current Rank of Ability 1 [%i] isn't less than your God Level divided by 2 [%i/2], cannot be levelled."), Ability1Level, GodLevel));
-		}
-		else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Ability 1 is already Max Rank."));
-	}
-	else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No Ability Points available."));
-}
-
-void ASLGod::LevelAbility2()
-{
-	if (AbilityPoints > 0)
-	{
-		if (Ability2Level < 5)
-		{
-			if (Ability2Level < (float)GodLevel / 2)
-			{
-				++Ability2Level;
-				--AbilityPoints;
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability 2 is now Level %i! You have %i Ability Points left."), Ability2Level, AbilityPoints));
-			}
-			else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Current Rank of Ability 2 [%i] isn't less than your God Level divided by 2 [%i/2], cannot be levelled."), Ability2Level, GodLevel));
-		}
-		else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Ability 2 is already Max Rank."));
-	}
-	else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No Ability Points available."));
-}
-
-void ASLGod::LevelAbility3()
-{
-	if (AbilityPoints > 0)
-	{
-		if (Ability3Level < 5)
-		{
-			if (Ability3Level < (float)GodLevel / 2)
-			{
-				++Ability3Level;
-				--AbilityPoints;
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability 3 is now Level %i! You have %i Ability Points left."), Ability3Level, AbilityPoints));
-			}
-			else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Current Rank of Ability 3 [%i] isn't less than your God Level divided by 2 [%f], cannot be levelled."), Ability3Level, (float)GodLevel / 2));
-		}
-		else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Ability 3 is already Max Rank."));
-	}
-	else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No Ability Points available."));
-}
-
-void ASLGod::LevelAbility4()
-{
-	if (AbilityPoints > 0)
-	{
-		if (Ability4Level < 5)
-		{
-			if (Ability4Level * 4 <= GodLevel - 5 || GodLevel == 20)
-			{
-				++Ability4Level;
-				--AbilityPoints;
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ultimate Ability is now Level %i! You have %i Ability Points left."), Ability4Level, AbilityPoints));
-			}
-			else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Current Rank of Ultimate Ability multiplied by 4 [%i] isn't less than or equal to your God Level minus 5 [%i] and your God Level isn't 20, cannot be levelled."), Ability4Level * 4, GodLevel - 5));
-		}
-		else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Ultimate Ability is already Max Rank."));
-	}
-	else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No Ability Points available."));
 }
 
 void ASLGod::OnBeginJump()
@@ -707,75 +539,6 @@ void ASLGod::SustainPerFive()
 	else if (CurrentMana != MaxMana) CurrentMana = MaxMana;
 }
 
-void ASLGod::ActivateCooldownTimer(FTimerHandle& CooldownTimer, float CooldownDuration, FString AbilityName, float AbilityManaCost, bool bUsesCDR)
-{
-	if (bUsesCDR) CooldownDuration *= (1 - CooldownReductionPercentage);
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s used! Mana Cost : %i [%i -> %i]"), *AbilityName, (int)AbilityManaCost, (int)CurrentMana, (int)CurrentMana - (int)AbilityManaCost));
-	CurrentMana -= AbilityManaCost;
-	GetWorld()->GetTimerManager().SetTimer(CooldownTimer, CooldownDuration, false);
-}
-
-bool ASLGod::IsAbilityAvailable(FTimerHandle& CooldownTimer, int AbilityLevel, TArray<float> AbilityManaCost, FString AbilityName, bool bAbilityIsPrimed)
-{
-	if (bAbilityIsPrimed)
-	{
-		if (AbilityLevel > 0)
-		{
-			if (!GetWorld()->GetTimerManager().IsTimerActive(CooldownTimer))
-			{
-				if ((int)CurrentMana >= (int)AbilityManaCost[AbilityLevel - 1]) return true;
-				else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Insufficient Mana [%i < %i]"), (int)CurrentMana, (int)AbilityManaCost[AbilityLevel - 1]));
-			}
-			else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s is cooling down: %fs"), *AbilityName, GetWorld()->GetTimerManager().GetTimerRemaining(CooldownTimer)));
-		}
-		else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("No points in %s."), *AbilityName));
-	}
-	return false;
-}
-
-void ASLGod::CancelAbility()
-{
-	if (bAbility1IsPrimed == true)
-	{
-		bAbility1IsPrimed = false;
-		for (UStaticMeshComponent* SMC : Ability1TargeterComponents)
-		{
-			SMC->SetVisibility(false);
-		}
-		CurrentMaxRange = 7000;
-		return;
-	}
-	if (bAbility2IsPrimed == true)
-	{
-		bAbility2IsPrimed = false;
-		for (UStaticMeshComponent* SMC : Ability2TargeterComponents)
-		{
-			SMC->SetVisibility(false);
-		}
-		CurrentMaxRange = 7000;
-		return;
-	}
-	if (bAbility3IsPrimed == true)
-	{
-		bAbility3IsPrimed = false;
-		for (UStaticMeshComponent* SMC : Ability3TargeterComponents)
-		{
-			SMC->SetVisibility(false);
-		}
-		CurrentMaxRange = 7000;
-		return;
-	}
-	if (bAbility4IsPrimed == true)
-	{
-		bAbility4IsPrimed = false;
-		for (UStaticMeshComponent* SMC : Ability4TargeterComponents)
-		{
-			SMC->SetVisibility(false);
-		}
-		CurrentMaxRange = 7000;
-		return;
-	}
-}
 
 void ASLGod::OnBasicAttackHit(TArray<ISLVulnerable*> Targets)
 {
@@ -804,23 +567,6 @@ void ASLGod::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ASLGod::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ASLGod::MoveRight);
-
-	PlayerInputComponent->BindAction("Ability1", IE_Pressed, this, &ASLGod::AimAbility1);
-	PlayerInputComponent->BindAction("Ability2", IE_Pressed, this, &ASLGod::AimAbility2);
-	PlayerInputComponent->BindAction("Ability3", IE_Pressed, this, &ASLGod::AimAbility3);
-	PlayerInputComponent->BindAction("Ability4", IE_Pressed, this, &ASLGod::AimAbility4);
-
-	PlayerInputComponent->BindAction("Ability1", IE_Released, this, &ASLGod::UseAbility1);
-	PlayerInputComponent->BindAction("Ability2", IE_Released, this, &ASLGod::UseAbility2);
-	PlayerInputComponent->BindAction("Ability3", IE_Released, this, &ASLGod::UseAbility3);
-	PlayerInputComponent->BindAction("Ability4", IE_Released, this, &ASLGod::UseAbility4);
-
-	PlayerInputComponent->BindAction("CancelAbility", IE_Pressed, this, &ASLGod::CancelAbility);
-
-	PlayerInputComponent->BindAction("LevelAbility1", IE_Pressed, this, &ASLGod::LevelAbility1);
-	PlayerInputComponent->BindAction("LevelAbility2", IE_Pressed, this, &ASLGod::LevelAbility2);
-	PlayerInputComponent->BindAction("LevelAbility3", IE_Pressed, this, &ASLGod::LevelAbility3);
-	PlayerInputComponent->BindAction("LevelAbility4", IE_Pressed, this, &ASLGod::LevelAbility4);
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASLGod::OnBeginJump);
 	PlayerInputComponent->BindAction("BasicAttack", IE_Pressed, this, &ASLGod::OnBeginFireBasicAttack);
