@@ -28,4 +28,6 @@ protected:
 	virtual void OnBasicAttackHit(TArray<ISLVulnerable*> Targets) override;
 
 	void ConsumeCombustionStacks();
+
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 };

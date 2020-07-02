@@ -124,6 +124,10 @@ public:
 	UFUNCTION()
 	void SustainPerFive();
 
+	void SetAbilityArrays();
+
+	void SetAbilityTargeterArrays();
+
 	virtual void OnBasicAttackHit(TArray<ISLVulnerable*> Targets) override;
 
 	virtual void TakeHealthDamage(float Val, ISLDangerous* Origin) override;
@@ -170,20 +174,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Material")
 	UMaterial* MTargeterReset;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Material")
+	UMaterial* MAbilityTargeter;
+
 	UStaticMeshComponent* CurrentAimComponent;
 
 	APlayerController* PlayerController;
 	UCharacterMovementComponent* CharacterMovementComponent;
 
 	FColor ConsoleColor{ FColor::Green };
-
-	FTimerHandle Ability1CooldownTimerHandle;
-
-	FTimerHandle Ability2CooldownTimerHandle;
-
-	FTimerHandle Ability3CooldownTimerHandle;
-
-	FTimerHandle Ability4CooldownTimerHandle;
 
 	FTimerHandle PerFiveTimerHandle;
 
@@ -211,102 +210,74 @@ protected:
 
 #pragma region Offense
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
 	float BaseBasicAttackSpeed{ 1 };
 
 	float CurrentBasicAttackSpeed{ 0 };
 
 	// Used as a percentage increase of the base rather than a flat numerical
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
 	float BasicAttackSpeedPerLevel{ .012 };
 
 	bool bIsBasicAttacking{ false };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
 	bool bFatalis{ false };
 
 	float BasicAttackPenalty{ 1 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
 	float BaseBasicAttackDamage{ 43 };
 
 	float CurrentBasicAttackDamage{ 0 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
 	float BasicAttackDamagePerLevel{ 1.5 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
 	float BasicAttackPowerScaling{ 1 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
 	float BasicAttackRangedPenalty{ 0.5 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
 	float BasicAttackMeleePenalty{ 0.65 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Power")
 	float PhysicalPower{ 0 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Power")
 	float MagicalPower{ 0 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Power")
 	bool bIsPhysicalDamage{ true };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Penetration")
 	float FlatPhysicalPenetration{ 0 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Penetration")
 	float FlatMagicalPenetration{ 0 };
 
 	const float MaxFlatPenetration{ 50 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Penetration")
 	float PercentagePhysicalPenetration{ 0 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Penetration")
 	float PercentageMagicalPenetration{ 0 };
 
 	const float MaxPercentagePenetration{ .4 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<float> BasicAttackRefireProgression{ 0.5, 1, 1 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<float> BasicAttackPrefireProgression{ 0.25, 0.25, 0.5 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<float> BasicAttackRangeProgression{ 55, 55, 55 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<float> BasicAttackDamageProgression{ BasicAttackRefireProgression };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<float> BasicAttackDisjointProgression{ 0, 0, 0, 0, 0, 0 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<float> RangedBasicAttackProjectileSizeProgression{ 3, 3, 3 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<float> RangedBasicAttackProjectileSpeedProgression{ 110, 110, 110 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<bool> bCleaveProgression{ false, false, false };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<float> CleaveDamageProgression{ 1, 1, 1 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<float> RangedCleaveRangeProgression{ 7.5, 7.5, 7.5 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<bool> bIsBasicAttackRangedProgression{ true, true, true };
 
 	// If disabled, Prefire shouldn't exceed (Refire / 2.5), otherwise attack speed will become inconsistent because the Postfire will be less than 0
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	TArray<bool> bHasScalingPrefireProgression{ true, true, true };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression")
 	float ProgressionResetTime{ 1 };
 
 	int CurrentProgression{ 0 };
@@ -317,48 +288,38 @@ protected:
 
 #pragma region Defense
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	float BasePhysicalProtections{ 11 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	float BaseMagicalProtections{ 30 };
 
 	float CurrentPhysicalProtections{ 0 };
 
 	float CurrentMagicalProtections{ 0 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	float PhysicalProtectionsPerLevel{ 2.6 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	float MagicalProtectionsPerLevel{ .9 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	float BaseHealth{ 600 };
 
 	float CurrentHealth{ 0 };
 
 	float MaxHealth{ 0 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	float HealthPerLevel{ 71 };
 
 	float Shield{ 0 };
 
 	const float MaxProtection{ 325 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	bool bHasBasicHealthBar{ false };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	int NumberOfBasics{ 0 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	float BaseHealthPerFive{ 7 };
 
 	float CurrentHealthPerFive{ 0 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	float HealthPerFivePerLevel{ .47 };
 
 	const float MaxPerFive{ 100 };
@@ -367,10 +328,8 @@ protected:
 
 #pragma region Movement
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float BaseMovementSpeed{ 360 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float MovementSpeedPerLevel{ 0 };
 
 	float UndiminishedMovementSpeed{ 0 };
@@ -385,10 +344,8 @@ protected:
 
 	const float MaximumDiminishedMovementSpeed{ 753.55 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float StrafePenalty{ 0.8 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float BackpedalPenalty{ 0.6 };
 
 	bool bIsJumping{ false };
@@ -397,55 +354,116 @@ protected:
 
 #pragma region Identity
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
 	FString UnitName{ "Unknown" };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
 	bool bIsOrder{ true };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
 	bool bIsNeutral{ false };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
 	int GodLevel{ 20 };
 
 #pragma endregion
 
 #pragma region Ability
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	float CooldownReductionPercentage{ 0 };
 
 	int AbilityPoints{ 0 };
 
 	int AbilitySlotPoints[4] = { 0, 0, 0, 0 };
 
+	int AbilitySlotAbilities[4] = { 0, 1, 2, 3 };
+
 	float BaseMaxTargeterRange{ 7000 };
 
 	float CurrentMaxTargeterRange{ BaseMaxTargeterRange };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	float BaseMana{ 255 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	float CurrentMana{ 0 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	float MaxMana{ 0 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	float ManaPerLevel{ 45 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	float BaseManaPerFive{ 4.7 };
 
 	float CurrentManaPerFive{ 0 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	float ManaPerFivePerLevel{ .37 };
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	TArray<UStaticMeshComponent*> AbilityTargeterComponents;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	TArray<UStaticMesh*> AbilityTargeterMeshes = { nullptr, nullptr, nullptr, nullptr };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	int NumberOfAbilities{ 4 };
+
+	TArray<FTimerHandle> AbilityCooldownTimerHandles;
+
+	TArray<FTimerDelegate> AbilityCooldownTimerDelegates;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<FString> AbilityNames = { "Noxious Fumes", "Flame Wave", "Path of Flames", "Rain Fire" };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<float> AbilityMaxRange = { 55, 70, 70, 65 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<int> AbilityCharges = { 1, 1, 1, 3 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<float> AbilityRankOneCooldowns = { 12, 15, 15, 18 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<float> AbilityRankTwoCooldowns = { 12, 14, 15, 18 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<float> AbilityRankThreeCooldowns = { 12, 13, 15, 18 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<float> AbilityRankFourCooldowns = { 12, 12, 15, 18 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<float> AbilityRankFiveCooldowns = { 12, 11, 15, 18 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<float> AbilityRankOneManaCosts = { 60, 60, 70, 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<float> AbilityRankTwoManaCosts = { 65, 70, 75, 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<float> AbilityRankThreeManaCosts = { 70, 80, 80, 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<float> AbilityRankFourManaCosts = { 75, 90, 85, 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<float> AbilityRankFiveManaCosts = { 80, 100, 90, 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<float> AbilityTargeterScalesX = { 40, 50, 60, 40 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<float> AbilityTargeterScalesY = { 40, 15, 10, 40 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<float> AbilityTargeterPositionsX = { 0, 0, -500, 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<float> AbilityTargeterPositionsY = { 0, 0, 0, 0 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<int> ATCCount = { 1, 1, 1, 1 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<bool> bAreInstantCast = { false, false, false, false };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<bool> bFollowGroundTargeter = { true, false, false, true };
 
 #pragma endregion
 

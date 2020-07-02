@@ -32,6 +32,9 @@ ASLAgni::ASLAgni()
 	MagicalProtectionsPerLevel = .9;
 	BaseHealthPerFive = 7;
 	HealthPerFivePerLevel = .47;
+
+	SetAbilityArrays();
+	SetAbilityTargeterArrays();
 }
 
 void ASLAgni::OnBasicAttackHit(TArray<ISLVulnerable*> Targets)
@@ -53,4 +56,16 @@ void ASLAgni::ConsumeCombustionStacks()
 {
 	CombustionCount = 0;
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Combustion Stacks Consumed."));
+}
+
+void ASLAgni::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	if (PropertyChangedEvent.GetPropertyName().ToString() == "NumberOfAbilities")
+	{
+		SetAbilityArrays();
+	}
+	else if (PropertyChangedEvent.GetPropertyName().ToString() == "ATCCount")
+	{
+		SetAbilityTargeterArrays();
+	}
 }

@@ -28,7 +28,7 @@ ASLGod::ASLGod()
 
 	MeleeAimComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeleeAimComponent"));
 	MeleeAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[CurrentProgression * 2], BasicAttackDisjointProgression[CurrentProgression * 2 + 1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
-	MeleeAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression], BasicAttackRangeProgression[CurrentProgression], .05));
+	MeleeAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression], BasicAttackRangeProgression[CurrentProgression], .1));
 	MeleeAimComponent->SetupAttachment(RootComponent);
 	MeleeAimComponent->SetVisibility(false);
 
@@ -214,6 +214,36 @@ void ASLGod::BeginPlay()
 	}
 
 	GetWorld()->GetTimerManager().SetTimer(PerFiveTimerHandle, PerFiveTimerDelegate, 1, true);
+
+	int j = 0;
+	int k = 0;
+	for (int i = 0; i < NumberOfAbilities; i++)
+	{
+		k += ATCCount[i];
+		int m = j - 1;
+		for (; j < k; j++)
+		{
+			AbilityTargeterComponents.Add(NewObject<UStaticMeshComponent>(this, *FString::Printf(TEXT("%s Targeter Component [%i]"), *AbilityNames[i], j - m)));
+			AbilityTargeterComponents[j]->RegisterComponent();
+			FAttachmentTransformRules ATR = FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, true);
+			if (bFollowGroundTargeter[j])
+			{
+				AbilityTargeterComponents[j]->AttachToComponent(AbilityAimComponent, ATR);
+				AbilityTargeterComponents[j]->SetRelativeLocation(FVector(AbilityTargeterPositionsX[j], AbilityTargeterPositionsY[j], 0));
+				AbilityTargeterComponents[j]->SetUsingAbsoluteScale(true);
+
+			}
+			else
+			{
+				AbilityTargeterComponents[j]->AttachToComponent(RootComponent, ATR);
+				AbilityTargeterComponents[j]->SetRelativeLocation(FVector(AbilityTargeterPositionsX[j], AbilityTargeterPositionsY[j], -GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() + 5));
+			}
+			AbilityTargeterComponents[j]->SetWorldScale3D(FVector(AbilityTargeterScalesX[j], AbilityTargeterScalesY[j], 0.1));
+			AbilityTargeterComponents[j]->SetStaticMesh(AbilityTargeterMeshes[j]);
+			AbilityTargeterComponents[j]->SetMaterial(0, MAbilityTargeter);
+			AbilityTargeterComponents[j]->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+	}
 }
 
 void ASLGod::LookUp(float Val)
@@ -473,7 +503,7 @@ void ASLGod::ResetProgression()
 	else
 	{
 		MeleeAimComponent->SetVisibility(true);
-		MeleeAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression], BasicAttackRangeProgression[CurrentProgression], .05));
+		MeleeAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression], BasicAttackRangeProgression[CurrentProgression], .1));
 		MeleeAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[CurrentProgression * 2], BasicAttackDisjointProgression[CurrentProgression * 2 + 1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
 		RangedAimComponent->SetVisibility(false);
 		CurrentAimComponent = MeleeAimComponent;
@@ -520,12 +550,12 @@ void ASLGod::ChangeBasicAttackTargeter()
 	{
 		if (CurrentProgression < BasicAttackRefireProgression.Num() - 1)
 		{
-			CurrentAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression + 1], BasicAttackRangeProgression[CurrentProgression + 1], .05));
+			CurrentAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[CurrentProgression + 1], BasicAttackRangeProgression[CurrentProgression + 1], .1));
 			CurrentAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[(CurrentProgression + 1) * 2], BasicAttackDisjointProgression[(CurrentProgression + 1) * 2 + 1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
 		}
 		else
 		{
-			CurrentAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[0], BasicAttackRangeProgression[0], .05));
+			CurrentAimComponent->SetRelativeScale3D(FVector(BasicAttackRangeProgression[0], BasicAttackRangeProgression[0], .1));
 			CurrentAimComponent->SetRelativeLocation(FVector(BasicAttackDisjointProgression[0], BasicAttackDisjointProgression[1], (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
 		}
 	}
@@ -539,6 +569,38 @@ void ASLGod::SustainPerFive()
 	else if (CurrentMana != MaxMana) CurrentMana = MaxMana;
 }
 
+
+void ASLGod::SetAbilityArrays()
+{
+	AbilityCooldownTimerHandles.SetNum(NumberOfAbilities, true);
+	AbilityCooldownTimerDelegates.SetNum(NumberOfAbilities, true);
+	AbilityNames.SetNum(NumberOfAbilities, true);
+	AbilityCharges.SetNum(NumberOfAbilities, true);
+	AbilityRankOneCooldowns.SetNum(NumberOfAbilities, true);
+	AbilityRankTwoCooldowns.SetNum(NumberOfAbilities, true);
+	AbilityRankThreeCooldowns.SetNum(NumberOfAbilities, true);
+	AbilityRankFourCooldowns.SetNum(NumberOfAbilities, true);
+	AbilityRankFiveCooldowns.SetNum(NumberOfAbilities, true);
+	AbilityRankOneManaCosts.SetNum(NumberOfAbilities, true);
+	AbilityRankTwoManaCosts.SetNum(NumberOfAbilities, true);
+	AbilityRankThreeManaCosts.SetNum(NumberOfAbilities, true);
+	AbilityRankFourManaCosts.SetNum(NumberOfAbilities, true);
+	AbilityRankFiveManaCosts.SetNum(NumberOfAbilities, true);
+	bAreInstantCast.SetNum(NumberOfAbilities, true);
+	ATCCount.SetNum(NumberOfAbilities, true);
+}
+
+void ASLGod::SetAbilityTargeterArrays()
+{
+	int ATCCountTotal = 0;
+	for (int i : ATCCount) ATCCountTotal += i;
+	AbilityTargeterMeshes.SetNum(ATCCountTotal, true);
+	AbilityTargeterScalesX.SetNum(ATCCountTotal, true);
+	AbilityTargeterScalesY.SetNum(ATCCountTotal, true);
+	AbilityTargeterPositionsX.SetNum(ATCCountTotal, true);
+	AbilityTargeterPositionsY.SetNum(ATCCountTotal, true);
+	bFollowGroundTargeter.SetNum(ATCCountTotal, true);
+}
 
 void ASLGod::OnBasicAttackHit(TArray<ISLVulnerable*> Targets)
 {
