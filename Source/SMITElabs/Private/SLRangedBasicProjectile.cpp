@@ -122,7 +122,7 @@ void ASLRangedBasicProjectile::Tick(float DeltaTime)
 
 	//Check if the projectile will match or exceed the max distance on the next frame. If so, set it at the max distance and destroy it.
 	//NOTE: This was done before I discovered the magic of UProjectileMovementComponent :/
-	if (FVector::Dist(StartingLocation, GetActorLocation() + SceneComponent->GetForwardVector() * ProjectileSpeed * 100 * DeltaTime) >= (ProjectileRange - ProjectileLength / 2) * 100)
+	if (FVector::Dist(StartingLocation, GetActorLocation() + SceneComponent->GetForwardVector() * ProjectileSpeed * 100 * DeltaTime) >= (ProjectileRange - ProjectileLength) * 100)
 	{
 		SetActorLocation(StartingLocation + SceneComponent->GetForwardVector() * (ProjectileRange - ProjectileLength / 2) * 100);
 		Destroy();

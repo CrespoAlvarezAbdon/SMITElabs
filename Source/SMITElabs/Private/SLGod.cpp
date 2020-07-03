@@ -32,9 +32,13 @@ ASLGod::ASLGod()
 	MeleeAimComponent->SetupAttachment(RootComponent);
 	MeleeAimComponent->SetVisibility(false);
 
+	TargeterLocationComponent = CreateDefaultSubobject<USceneComponent>(TEXT("TargeterLocationComponent"));
+	TargeterLocationComponent->SetupAttachment(RootComponent);
+	TargeterLocationComponent->SetRelativeLocation(FVector(3700, 0, (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
+	TargeterLocationComponent->SetVisibility(false);
+
 	AbilityAimComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("AbilityAimComponent"));
-	AbilityAimComponent->SetupAttachment(RootComponent);
-	AbilityAimComponent->SetRelativeLocation(FVector(3700, 0, (StaticMeshComponent->GetRelativeScale3D().Z * 100) / -2 + 5));
+	AbilityAimComponent->SetupAttachment(TargeterLocationComponent);
 	AbilityAimComponent->SetRelativeScale3D(FVector(4, 4, .1));
 	AbilityAimComponent->SetVisibility(false);	
 
@@ -225,13 +229,12 @@ void ASLGod::BeginPlay()
 		{
 			AbilityTargeterComponents.Add(NewObject<UStaticMeshComponent>(this, *FString::Printf(TEXT("%s Targeter Component [%i]"), *AbilityNames[i], j - m)));
 			AbilityTargeterComponents[j]->RegisterComponent();
-			FAttachmentTransformRules ATR = FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, true);
+			AbilityTargeterComponents[j]->SetUsingAbsoluteScale(true);
+			FAttachmentTransformRules ATR = FAttachmentTransformRules(EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, true);
 			if (bFollowGroundTargeter[j])
 			{
-				AbilityTargeterComponents[j]->AttachToComponent(AbilityAimComponent, ATR);
+				AbilityTargeterComponents[j]->AttachToComponent(TargeterLocationComponent, ATR);
 				AbilityTargeterComponents[j]->SetRelativeLocation(FVector(AbilityTargeterPositionsX[j], AbilityTargeterPositionsY[j], 0));
-				AbilityTargeterComponents[j]->SetUsingAbsoluteScale(true);
-
 			}
 			else
 			{
@@ -239,9 +242,71 @@ void ASLGod::BeginPlay()
 				AbilityTargeterComponents[j]->SetRelativeLocation(FVector(AbilityTargeterPositionsX[j], AbilityTargeterPositionsY[j], -GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() + 5));
 			}
 			AbilityTargeterComponents[j]->SetWorldScale3D(FVector(AbilityTargeterScalesX[j], AbilityTargeterScalesY[j], 0.1));
+			AbilityTargeterComponents[j]->SetRelativeRotation(FRotator(0, AbilityTargeterRotations[j], 0));
 			AbilityTargeterComponents[j]->SetStaticMesh(AbilityTargeterMeshes[j]);
 			AbilityTargeterComponents[j]->SetMaterial(0, MAbilityTargeter);
 			AbilityTargeterComponents[j]->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+	}
+}
+
+void ASLGod::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	if (PropertyChangedEvent.GetPropertyName().ToString() == "NumberOfAbilities")
+	{
+		SetAbilityArrays();
+		SetAbilityTargeterArrays();
+	}
+	else if (PropertyChangedEvent.GetPropertyName().ToString() == "ATCCount") SetAbilityTargeterArrays();
+
+	if (AbilityTargeterComponents.Num() > 0)
+	{
+		if (PropertyChangedEvent.GetPropertyName().ToString() == "AbilityTargeterScalesX")
+		{
+			int i = PropertyChangedEvent.GetArrayIndex("AbilityTargeterScalesX");
+			AbilityTargeterComponents[i]->SetWorldScale3D(FVector(AbilityTargeterScalesX[i], AbilityTargeterScalesY[i], 0.1));
+		}
+		else if (PropertyChangedEvent.GetPropertyName().ToString() == "AbilityTargeterScalesY")
+		{
+			int i = PropertyChangedEvent.GetArrayIndex("AbilityTargeterScalesY");
+			AbilityTargeterComponents[i]->SetWorldScale3D(FVector(AbilityTargeterScalesX[i], AbilityTargeterScalesY[i], 0.1));
+		}
+		else if (PropertyChangedEvent.GetPropertyName().ToString() == "AbilityTargeterPositionsX")
+		{
+			int i = PropertyChangedEvent.GetArrayIndex("AbilityTargeterPositionsX");
+			if (bFollowGroundTargeter[i])
+				AbilityTargeterComponents[i]->SetRelativeLocation(FVector(AbilityTargeterPositionsX[i], AbilityTargeterPositionsY[i], 0));
+			else
+				AbilityTargeterComponents[i]->SetRelativeLocation(FVector(AbilityTargeterPositionsX[i], AbilityTargeterPositionsY[i], -GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() + 5));
+		}
+		else if (PropertyChangedEvent.GetPropertyName().ToString() == "AbilityTargeterPositionsY")
+		{
+			int i = PropertyChangedEvent.GetArrayIndex("AbilityTargeterPositionsY");
+			if (bFollowGroundTargeter[i])
+				AbilityTargeterComponents[i]->SetRelativeLocation(FVector(AbilityTargeterPositionsX[i], AbilityTargeterPositionsY[i], 0));
+			else
+				AbilityTargeterComponents[i]->SetRelativeLocation(FVector(AbilityTargeterPositionsX[i], AbilityTargeterPositionsY[i], -GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() + 5));
+		}
+		else if (PropertyChangedEvent.GetPropertyName().ToString() == "AbilityTargeterRotations")
+		{
+			int i = PropertyChangedEvent.GetArrayIndex("AbilityTargeterRotations");
+			AbilityTargeterComponents[i]->SetRelativeRotation(FRotator(0, AbilityTargeterRotations[i], 0));
+		}
+		else if (PropertyChangedEvent.GetPropertyName().ToString() == "bFollowGroundTargeter")
+		{
+			FAttachmentTransformRules ATR = FAttachmentTransformRules(EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, true);
+			int i = PropertyChangedEvent.GetArrayIndex("bFollowGroundTargeter");
+			if (bFollowGroundTargeter[i])
+			{
+				AbilityTargeterComponents[i]->AttachToComponent(TargeterLocationComponent, ATR);
+				AbilityTargeterComponents[i]->SetRelativeLocation(FVector(AbilityTargeterPositionsX[i], AbilityTargeterPositionsY[i], 0));
+
+			}
+			else
+			{
+				AbilityTargeterComponents[i]->AttachToComponent(RootComponent, ATR);
+				AbilityTargeterComponents[i]->SetRelativeLocation(FVector(AbilityTargeterPositionsX[i], AbilityTargeterPositionsY[i], -GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() + 5));
+			}
 		}
 	}
 }
@@ -270,9 +335,9 @@ void ASLGod::LookUp(float Val)
 	FHitResult HitResult;
 	GetWorld()->LineTraceSingleByChannel(HitResult, CameraComponent->GetComponentLocation(), CameraComponent->GetComponentLocation() + PlayerController->GetControlRotation().Vector() * 100000, ECollisionChannel::ECC_GameTraceChannel2);
 
-	AbilityAimComponent->SetWorldLocation(FVector(HitResult.ImpactPoint.X, HitResult.ImpactPoint.Y, HitResult.ImpactPoint.Z + 5));
-	if (AbilityAimComponent->GetRelativeLocation().X > CurrentMaxTargeterRange || HitResult.ImpactPoint == FVector::ZeroVector) AbilityAimComponent->SetRelativeLocation(FVector(CurrentMaxTargeterRange, 0, AbilityAimComponent->GetRelativeLocation().Z));
-	AbilityAimComponent->SetRelativeScale3D(FVector(AbilityAimComponent->GetRelativeLocation().X / (7000 / 4) + 4, AbilityAimComponent->GetRelativeLocation().X / (7000 / 4) + 4, AbilityAimComponent->GetRelativeScale3D().Z));
+	TargeterLocationComponent->SetWorldLocation(FVector(HitResult.ImpactPoint.X, HitResult.ImpactPoint.Y, HitResult.ImpactPoint.Z + 5));
+	if (TargeterLocationComponent->GetRelativeLocation().X > CurrentMaxTargeterRange || HitResult.ImpactPoint == FVector::ZeroVector) TargeterLocationComponent->SetRelativeLocation(FVector(CurrentMaxTargeterRange, 0, TargeterLocationComponent->GetRelativeLocation().Z));
+	AbilityAimComponent->SetRelativeScale3D(FVector(TargeterLocationComponent->GetRelativeLocation().X / (7000 / 4) + 4, TargeterLocationComponent->GetRelativeLocation().X / (7000 / 4) + 4, AbilityAimComponent->GetRelativeScale3D().Z));
 }
 
 void ASLGod::TurnRight(float Val)
@@ -599,6 +664,7 @@ void ASLGod::SetAbilityTargeterArrays()
 	AbilityTargeterScalesY.SetNum(ATCCountTotal, true);
 	AbilityTargeterPositionsX.SetNum(ATCCountTotal, true);
 	AbilityTargeterPositionsY.SetNum(ATCCountTotal, true);
+	AbilityTargeterRotations.SetNum(ATCCountTotal, true);
 	bFollowGroundTargeter.SetNum(ATCCountTotal, true);
 }
 

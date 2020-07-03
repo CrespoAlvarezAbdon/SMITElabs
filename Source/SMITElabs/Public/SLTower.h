@@ -123,10 +123,13 @@ protected:
 
 #pragma region Defense
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	float PhysicalProtections{ 125 };
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	float MagicalProtections{ 125 };
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	float BaseHealth{ 2500 };
 
 	float CurrentHealth{ BaseHealth };
@@ -137,18 +140,23 @@ protected:
 
 	const float MaxProtection{ 325 };
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	bool bHasBasicHealthBar{ false };
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	int NumberOfBasics{ 0 };
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower Defense")
 	float TowerMaxRegenHealth{ BaseHealth * .7f };
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower Defense")
 	float TowerHealthPerSecond{ 8 };
 
 #pragma endregion
 
 #pragma region Identity
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
 	FString UnitName{ "Unknown" };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")

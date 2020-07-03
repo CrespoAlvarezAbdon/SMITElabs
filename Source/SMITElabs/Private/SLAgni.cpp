@@ -33,6 +33,7 @@ ASLAgni::ASLAgni()
 	BaseHealthPerFive = 7;
 	HealthPerFivePerLevel = .47;
 
+	//Essential for proper implementation of editing ability stuff in blueprints and at runtime
 	SetAbilityArrays();
 	SetAbilityTargeterArrays();
 }
@@ -56,16 +57,4 @@ void ASLAgni::ConsumeCombustionStacks()
 {
 	CombustionCount = 0;
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Combustion Stacks Consumed."));
-}
-
-void ASLAgni::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
-{
-	if (PropertyChangedEvent.GetPropertyName().ToString() == "NumberOfAbilities")
-	{
-		SetAbilityArrays();
-	}
-	else if (PropertyChangedEvent.GetPropertyName().ToString() == "ATCCount")
-	{
-		SetAbilityTargeterArrays();
-	}
 }
