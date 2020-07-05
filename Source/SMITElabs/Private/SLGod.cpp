@@ -208,21 +208,12 @@ void ASLGod::BeginPlay()
 
 	SetBaseStatistics();
 
-	if (this == UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
-	{
-		PlayerController->SetControlRotation(FRotator(-35, 0, 0));
-		RangeLineComponent->SetVisibility(true);
-		AbilityAimComponent->SetVisibility(true);
-		
-		ResetProgression();
-	}
-
-	GetWorld()->GetTimerManager().SetTimer(PerFiveTimerHandle, PerFiveTimerDelegate, 1, true);
-
 	int j = 0;
 	int k = 0;
 	for (int i = 0; i < NumberOfAbilities; i++)
 	{
+		AbilityCooldownTimerHandles.Add(FTimerHandle());
+		AbilityCooldownTimerDelegates.Add(FTimerDelegate());
 		k += ATCCount[i];
 		int m = j - 1;
 		for (; j < k; j++)
@@ -246,8 +237,19 @@ void ASLGod::BeginPlay()
 			AbilityTargeterComponents[j]->SetStaticMesh(AbilityTargeterMeshes[j]);
 			AbilityTargeterComponents[j]->SetMaterial(0, MAbilityTargeter);
 			AbilityTargeterComponents[j]->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			AbilityTargeterComponents[j]->SetVisibility(false);
 		}
 	}
+
+	if (this == UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
+	{
+		PlayerController->SetControlRotation(FRotator(-35, 0, 0));
+		RangeLineComponent->SetVisibility(true);
+		AbilityAimComponent->SetVisibility(true);
+		ResetProgression();
+	}
+
+	GetWorld()->GetTimerManager().SetTimer(PerFiveTimerHandle, PerFiveTimerDelegate, 1, true);
 }
 
 void ASLGod::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
@@ -259,7 +261,7 @@ void ASLGod::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChange
 	}
 	else if (PropertyChangedEvent.GetPropertyName().ToString() == "ATCCount") SetAbilityTargeterArrays();
 
-	if (AbilityTargeterComponents.Num() > 0)
+	else if (AbilityTargeterComponents.Num() > 0)
 	{
 		if (PropertyChangedEvent.GetPropertyName().ToString() == "AbilityTargeterScalesX")
 		{
@@ -307,6 +309,11 @@ void ASLGod::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChange
 				AbilityTargeterComponents[i]->AttachToComponent(RootComponent, ATR);
 				AbilityTargeterComponents[i]->SetRelativeLocation(FVector(AbilityTargeterPositionsX[i], AbilityTargeterPositionsY[i], -GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() + 5));
 			}
+		}
+		else if (PropertyChangedEvent.GetPropertyName().ToString() == "AbilityTargeterMeshes")
+		{
+			int i = PropertyChangedEvent.GetArrayIndex("AbilityTargeterMeshes");
+			AbilityTargeterComponents[i]->SetStaticMesh(AbilityTargeterMeshes[i]);
 		}
 	}
 }
@@ -640,6 +647,7 @@ void ASLGod::SetAbilityArrays()
 	AbilityCooldownTimerHandles.SetNum(NumberOfAbilities, true);
 	AbilityCooldownTimerDelegates.SetNum(NumberOfAbilities, true);
 	AbilityNames.SetNum(NumberOfAbilities, true);
+	AbilityMaxRanges.SetNum(NumberOfAbilities, true);
 	AbilityCharges.SetNum(NumberOfAbilities, true);
 	AbilityRankOneCooldowns.SetNum(NumberOfAbilities, true);
 	AbilityRankTwoCooldowns.SetNum(NumberOfAbilities, true);
@@ -666,6 +674,75 @@ void ASLGod::SetAbilityTargeterArrays()
 	AbilityTargeterPositionsY.SetNum(ATCCountTotal, true);
 	AbilityTargeterRotations.SetNum(ATCCountTotal, true);
 	bFollowGroundTargeter.SetNum(ATCCountTotal, true);
+}
+
+void ASLGod::LevelAbility(int AbilitySlot)
+{
+	if (AbilityPoints > 0)
+	{
+		if (AbilitySlotPoints[AbilitySlot] < 5)
+		{
+			if (AbilitySlotPoints[AbilitySlot] < (float)GodLevel / 2)
+			{
+				++AbilitySlotPoints[AbilitySlot];
+				--AbilityPoints;
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability Slot %i is now Level %i! You have %i Ability Points left."), AbilitySlot + 1, AbilitySlotPoints[AbilitySlot], AbilityPoints));
+			}
+			else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Current Rank of Ability Slot %i [%i] isn't less than your God Level divided by 2 [%i/2], cannot be levelled."), AbilitySlot + 1, AbilitySlotPoints[AbilitySlot], GodLevel));
+		}
+		else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Ability Slot %i is already Max Rank."), AbilitySlot + 1));
+	}
+	else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No Ability Points available."));
+
+}
+
+void ASLGod::AimAbility(int AbilitySlot)
+{
+	if (AbilitySlot < NumberOfAbilities)
+	{
+		if (AbilitySlotPoints[AbilitySlot] > 0)
+		{
+			if (!GetWorld()->GetTimerManager().IsTimerActive(AbilityCooldownTimerHandles[AbilitySlotAbilities[AbilitySlot]]))
+			{
+				CancelAbility();
+				int FirstAbilityTargeterComponentID{ 0 };
+				for (int i = 0; i < AbilitySlotAbilities[AbilitySlot]; i++)
+				{
+					FirstAbilityTargeterComponentID += ATCCount[i];
+				}
+				for (int i = FirstAbilityTargeterComponentID; i < ATCCount[AbilitySlotAbilities[AbilitySlot]] + FirstAbilityTargeterComponentID; i++)
+				{
+					ActiveAbilityTargeterComponentIDs.Add(i);
+					AbilityTargeterComponents[i]->SetVisibility(true);
+				}
+				PrimedAbility = AbilitySlotAbilities[AbilitySlot];
+				if (bFollowGroundTargeter[AbilitySlotAbilities[AbilitySlot]]) CurrentMaxTargeterRange = AbilityMaxRanges[AbilitySlotAbilities[AbilitySlot]] * 100;
+			}
+			else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s is cooling down: %fs"), *AbilityNames[AbilitySlotAbilities[AbilitySlot]], GetWorld()->GetTimerManager().GetTimerRemaining(AbilityCooldownTimerHandles[AbilitySlotAbilities[AbilitySlot]])));
+		}
+		else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("No points in %s."), *AbilityNames[AbilitySlotAbilities[AbilitySlot]]));
+	}
+	else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Ability Slot %i is empty!"), AbilitySlot + 1));
+}
+
+void ASLGod::CancelAbility()
+{
+	for (int i : ActiveAbilityTargeterComponentIDs)
+	{
+		AbilityTargeterComponents[i]->SetVisibility(false);
+	}
+	ActiveAbilityTargeterComponentIDs.Empty();
+	PrimedAbility = -1;
+	CurrentMaxTargeterRange = 7000;
+}
+
+void ASLGod::FireAbility(int AbilitySlot)
+{
+	if (AbilitySlotAbilities[AbilitySlot] == PrimedAbility)
+	{ 
+		//if ((int)CurrentMana >= (int)AbilityManaCosts[AbilityLevel - 1])
+		CancelAbility();
+	}
 }
 
 void ASLGod::OnBasicAttackHit(TArray<ISLVulnerable*> Targets)
@@ -699,4 +776,21 @@ void ASLGod::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASLGod::OnBeginJump);
 	PlayerInputComponent->BindAction("BasicAttack", IE_Pressed, this, &ASLGod::OnBeginFireBasicAttack);
 	PlayerInputComponent->BindAction("BasicAttack", IE_Released, this, &ASLGod::OnEndFireBasicAttack);
+
+	PlayerInputComponent->BindAction<FAbilityDelegate>("LevelAbility1", IE_Pressed, this, &ASLGod::LevelAbility, 0);
+	PlayerInputComponent->BindAction<FAbilityDelegate>("LevelAbility2", IE_Pressed, this, &ASLGod::LevelAbility, 1);
+	PlayerInputComponent->BindAction<FAbilityDelegate>("LevelAbility3", IE_Pressed, this, &ASLGod::LevelAbility, 2);
+	PlayerInputComponent->BindAction<FAbilityDelegate>("LevelAbility4", IE_Pressed, this, &ASLGod::LevelAbility, 3);
+
+	PlayerInputComponent->BindAction<FAbilityDelegate>("Ability1", IE_Pressed, this, &ASLGod::AimAbility, 0);
+	PlayerInputComponent->BindAction<FAbilityDelegate>("Ability2", IE_Pressed, this, &ASLGod::AimAbility, 1);
+	PlayerInputComponent->BindAction<FAbilityDelegate>("Ability3", IE_Pressed, this, &ASLGod::AimAbility, 2);
+	PlayerInputComponent->BindAction<FAbilityDelegate>("Ability4", IE_Pressed, this, &ASLGod::AimAbility, 3);
+
+	PlayerInputComponent->BindAction<FAbilityDelegate>("Ability1", IE_Released, this, &ASLGod::FireAbility, 0);
+	PlayerInputComponent->BindAction<FAbilityDelegate>("Ability2", IE_Released, this, &ASLGod::FireAbility, 1);
+	PlayerInputComponent->BindAction<FAbilityDelegate>("Ability3", IE_Released, this, &ASLGod::FireAbility, 2);
+	PlayerInputComponent->BindAction<FAbilityDelegate>("Ability4", IE_Released, this, &ASLGod::FireAbility, 3);
+
+	PlayerInputComponent->BindAction("CancelAbility", IE_Pressed, this, &ASLGod::CancelAbility);
 }

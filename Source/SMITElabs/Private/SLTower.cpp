@@ -26,6 +26,9 @@ ASLTower::ASLTower()
 	TowerShotRangeComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TowerShotRangeComponent"));
 	TowerShotRangeComponent->SetupAttachment(RootComponent);
 
+	TowerShotVisualRangeComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TowerShotVisualRangeComponent"));
+	TowerShotVisualRangeComponent->SetupAttachment(RootComponent);
+
 	TowerShotRangeComponent->OnComponentBeginOverlap.AddDynamic(this, &ASLTower::OnOverlapBegin);
 	TowerShotRangeComponent->OnComponentEndOverlap.AddDynamic(this, &ASLTower::OnOverlapEnd);
 

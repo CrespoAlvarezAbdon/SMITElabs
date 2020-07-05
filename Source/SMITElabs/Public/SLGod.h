@@ -37,6 +37,8 @@ class ISLMobile;
 class ISLIdentifiable;
 struct FTimerHandle;
 
+DECLARE_DELEGATE_OneParam(FAbilityDelegate, int);
+
 /**
  *
  */
@@ -127,6 +129,14 @@ public:
 	void SetAbilityArrays();
 
 	void SetAbilityTargeterArrays();
+
+	void LevelAbility(int AbilitySlot);
+
+	void AimAbility(int AbilitySlot);
+
+	void CancelAbility();
+
+	virtual void FireAbility(int AbilitySlot);
 
 	virtual void OnBasicAttackHit(TArray<ISLVulnerable*> Targets) override;
 
@@ -449,24 +459,28 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	float ManaPerFivePerLevel{ .37 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Ability")
+	int NumberOfAbilities{ 4 };
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, EditFixedSize, Category = "Ability")
 	TArray<UStaticMeshComponent*> AbilityTargeterComponents;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
-	TArray<UStaticMesh*> AbilityTargeterMeshes = { nullptr, nullptr, nullptr, nullptr };
+	TArray<int> ActiveAbilityTargeterComponentIDs;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
-	int NumberOfAbilities{ 4 };
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<UStaticMesh*> AbilityTargeterMeshes;
 
 	TArray<FTimerHandle> AbilityCooldownTimerHandles;
 
 	TArray<FTimerDelegate> AbilityCooldownTimerDelegates;
 
+	int PrimedAbility{ -1 };
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, EditFixedSize, Category = "Ability")
 	TArray<FString> AbilityNames = { "Noxious Fumes", "Flame Wave", "Path of Flames", "Rain Fire" };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
-	TArray<float> AbilityMaxRange = { 55, 70, 70, 65 };
+	TArray<float> AbilityMaxRanges = { 55, 70, 70, 65 };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
 	TArray<int> AbilityCharges = { 1, 1, 1, 3 };
@@ -500,6 +514,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
 	TArray<float> AbilityRankFiveManaCosts = { 80, 100, 90, 0 };
+
+	//float CurrentAbilityCooldowns = { AbilityRankOneManaCosts, }
+
+	//float CurrentAbilityManaCosts = {AbilityRankOneManaCosts, }
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
 	TArray<float> AbilityTargeterScalesX = { 40, 50, 60, 40 };

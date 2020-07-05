@@ -77,6 +77,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Collision")
 	UStaticMeshComponent* TowerShotRangeComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Collision")
+	UStaticMeshComponent* TowerShotVisualRangeComponent;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Projectile")
 	TSubclassOf<class ASLTowerProjectile> TowerProjectile;
 
