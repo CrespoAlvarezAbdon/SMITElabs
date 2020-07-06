@@ -136,6 +136,9 @@ public:
 
 	void CancelAbility();
 
+	UFUNCTION()
+	void OnAbilityCooldownEnded(int AbilityID);
+
 	virtual void FireAbility(int AbilitySlot);
 
 	virtual void OnBasicAttackHit(TArray<ISLVulnerable*> Targets) override;
@@ -459,8 +462,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	float ManaPerFivePerLevel{ .37 };
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Ability")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Ability", meta = (ClampMin = "4.0"))
 	int NumberOfAbilities{ 4 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<int> AbilitySlots = { 0, 1, 2, 3 };
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, EditFixedSize, Category = "Ability")
 	TArray<UStaticMeshComponent*> AbilityTargeterComponents;
@@ -483,7 +489,10 @@ protected:
 	TArray<float> AbilityMaxRanges = { 55, 70, 70, 65 };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
-	TArray<int> AbilityCharges = { 1, 1, 1, 3 };
+	TArray<int> MaxAbilityCharges = { 1, 1, 1, 3 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<int> CurrentAbilityCharges = { 1, 1, 1, 0 };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
 	TArray<float> AbilityRankOneCooldowns = { 12, 15, 15, 18 };
@@ -515,9 +524,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
 	TArray<float> AbilityRankFiveManaCosts = { 80, 100, 90, 0 };
 
-	//float CurrentAbilityCooldowns = { AbilityRankOneManaCosts, }
+	TArray<float> CurrentAbilityCooldowns = { AbilityRankOneCooldowns[0], AbilityRankOneCooldowns[1], AbilityRankOneCooldowns[2], AbilityRankOneCooldowns[3] };
 
-	//float CurrentAbilityManaCosts = {AbilityRankOneManaCosts, }
+	TArray<float> CurrentAbilityManaCosts = { AbilityRankOneManaCosts[0], AbilityRankOneManaCosts[1], AbilityRankOneManaCosts[2], AbilityRankOneManaCosts[3] };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
 	TArray<float> AbilityTargeterScalesX = { 40, 50, 60, 40 };
