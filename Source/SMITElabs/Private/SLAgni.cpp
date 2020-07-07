@@ -2,6 +2,7 @@
 
 
 #include "SLAgni.h"
+#include "SMITElabs/Public/SLAgniFlameWave.h"
 
 ASLAgni::ASLAgni()
 {
@@ -36,6 +37,17 @@ ASLAgni::ASLAgni()
 	//Essential for proper implementation of editing ability stuff in blueprints and at runtime
 	SetAbilityArrays();
 	SetAbilityTargeterArrays();
+
+	FlameWaveDelayTimerDelegate.BindUFunction(this, FName("UseFlameWave"), false);
+}
+
+void ASLAgni::UseFlameWave()
+{
+	ASLAgniFlameWave* FlameWave = GetWorld()->SpawnActorDeferred<ASLAgniFlameWave>(FlameWaveProjectile, GetTransform());
+	FlameWave->SetOrigin(this);
+	FlameWave->SetDamage(FlameWaveDamage[AbilitySlotPoints[0]]);
+	FlameWave->SetScaling(FlameWaveScaling);
+	UGameplayStatics::FinishSpawningActor(FlameWave, FlameWave->GetTransform());
 }
 
 void ASLAgni::OnBasicAttackHit(TArray<ISLVulnerable*> Targets)
@@ -49,6 +61,29 @@ void ASLAgni::OnBasicAttackHit(TArray<ISLVulnerable*> Targets)
 			++CombustionCount;
 			if (CombustionCount >= 4)GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Combustion is ready!"));
 			else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Combustion Passive Count: %i"), CombustionCount));
+		}
+	}
+}
+
+void ASLAgni::FireAbility(int AbilitySlot)
+{
+	if (AbilitySlotAbilities[AbilitySlot] == PrimedAbility)
+	{
+		if ((int)CurrentMana >= (int)CurrentAbilityManaCosts[AbilitySlot])
+		{
+			switch (AbilitySlot)
+			{
+			case 0:
+				break;
+			case 1:
+				GetWorld()->GetTimerManager().SetTimer(FlameWaveDelayTimerHandle, FlameWaveDelayTimerDelegate, .5, false);
+				Super::FireAbility(AbilitySlot);
+				break;
+			case 2:
+				break;
+			case 3:
+				break;
+			}
 		}
 	}
 }

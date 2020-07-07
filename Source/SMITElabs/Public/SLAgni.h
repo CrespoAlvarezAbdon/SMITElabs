@@ -6,6 +6,8 @@
 #include "SLGod.h"
 #include "SLAgni.generated.h"
 
+class ASLAgniFlameWave;
+
 /**
  * 
  */
@@ -19,13 +21,29 @@ public:
 
 protected:
 
-	FTimerDelegate RainFireTimerDelegate;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Ability")
+	TSubclassOf<class ASLAgniFlameWave> FlameWaveProjectile;
+
+	FTimerHandle FlameWaveDelayTimerHandle;
+
+	FTimerDelegate FlameWaveDelayTimerDelegate;
 
 	int CombustionCount{ 0 };
 
-	int UltCharges{ 0 };
+	float CombustionDamage{ 5 };
+
+	float CombustionScaling{ .1 };
+
+	TArray<float> FlameWaveDamage = {90, 140, 190, 240, 290};
+
+	float FlameWaveScaling{ .65 };
+
+	UFUNCTION()
+	void UseFlameWave();
 
 	virtual void OnBasicAttackHit(TArray<ISLVulnerable*> Targets) override;
+
+	virtual void FireAbility(int AbilitySlot) override;
 
 	void ConsumeCombustionStacks();
 };

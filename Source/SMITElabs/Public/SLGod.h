@@ -495,6 +495,9 @@ protected:
 	TArray<int> CurrentAbilityCharges = { 1, 1, 1, 0 };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<int> AbilityChargesAtLevelOne = { 1, 1, 1, 1 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
 	TArray<float> AbilityRankOneCooldowns = { 12, 15, 15, 18 };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")

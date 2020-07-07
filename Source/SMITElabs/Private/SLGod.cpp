@@ -254,7 +254,11 @@ void ASLGod::BeginPlay()
 
 	for (int i = 0; i < 4; i++)
 		for (int j = 0; j < AbilitySlots.Num(); j++)
-			if (AbilitySlots[j] == i) AbilitySlotAbilities[i] = j;
+			if (AbilitySlots[j] == i) 
+				{
+					AbilitySlotAbilities[i] = j;
+					break;
+				}
 
 	GetWorld()->GetTimerManager().SetTimer(PerFiveTimerHandle, PerFiveTimerDelegate, 1, true);
 }
@@ -724,7 +728,8 @@ void ASLGod::LevelAbility(int AbilitySlot)
 							CurrentAbilityManaCosts[i] = AbilityRankFiveManaCosts[i];
 							break;
 						}
-						if (CurrentAbilityCharges[i] < MaxAbilityCharges[i])
+						if (AbilitySlotPoints[AbilitySlot] == 1) CurrentAbilityCharges[i] = AbilityChargesAtLevelOne[i];
+						if (CurrentAbilityCharges[i] < MaxAbilityCharges[i] && !GetWorld()->GetTimerManager().IsTimerActive(AbilityCooldownTimerHandles[i]))
 						{
 							GetWorld()->GetTimerManager().ClearTimer(AbilityCooldownTimerHandles[i]);
 							GetWorld()->GetTimerManager().SetTimer(AbilityCooldownTimerHandles[i], AbilityCooldownTimerDelegates[i], CurrentAbilityCooldowns[i] * (1 - CooldownReductionPercentage), false);
@@ -791,6 +796,9 @@ void ASLGod::OnAbilityCooldownEnded(int AbilityID)
 		GetWorld()->GetTimerManager().ClearTimer(AbilityCooldownTimerHandles[AbilityID]);
 		GetWorld()->GetTimerManager().SetTimer(AbilityCooldownTimerHandles[AbilityID], AbilityCooldownTimerDelegates[AbilityID], CurrentAbilityCooldowns[AbilityID] * (1 - CooldownReductionPercentage), false);
 	}
+
+	if (MaxAbilityCharges[AbilityID] <= 1) GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s is no longer on cooldown!"), *AbilityNames[AbilityID]));
+	else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s has gained a charge! %i/%i charges remaining."), *AbilityNames[AbilityID], CurrentAbilityCharges[AbilityID], MaxAbilityCharges[AbilityID]));
 }
 
 void ASLGod::FireAbility(int AbilitySlot)
@@ -800,10 +808,13 @@ void ASLGod::FireAbility(int AbilitySlot)
 		if ((int)CurrentMana >= (int)CurrentAbilityManaCosts[AbilitySlot])
 		{
 			CancelAbility();
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s used! Mana Cost : %i [%i -> %i]"), *AbilityNames[AbilitySlotAbilities[AbilitySlot]], (int)CurrentAbilityManaCosts[AbilitySlot], (int)CurrentMana, (int)CurrentMana - (int)CurrentAbilityManaCosts[AbilitySlot]));
+			FString AbilityChargeMessage;
+			if (MaxAbilityCharges[AbilitySlotAbilities[AbilitySlot]] > 1) AbilityChargeMessage = FString::Printf(TEXT("; %i/%i charges remaining."), CurrentAbilityCharges[AbilitySlotAbilities[AbilitySlot]] - 1, MaxAbilityCharges[AbilitySlotAbilities[AbilitySlot]]);
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s used! Mana Cost : %i [%i -> %i]%s"), *AbilityNames[AbilitySlotAbilities[AbilitySlot]], (int)CurrentAbilityManaCosts[AbilitySlot], (int)CurrentMana, (int)CurrentMana - (int)CurrentAbilityManaCosts[AbilitySlot], *AbilityChargeMessage));
 			CurrentMana -= CurrentAbilityManaCosts[AbilitySlot];
 			--CurrentAbilityCharges[AbilitySlotAbilities[AbilitySlot]];
-			GetWorld()->GetTimerManager().SetTimer(AbilityCooldownTimerHandles[AbilitySlotAbilities[AbilitySlot]], AbilityCooldownTimerDelegates[AbilitySlotAbilities[AbilitySlot]], CurrentAbilityCooldowns[AbilitySlotAbilities[AbilitySlot]] * (1 - CooldownReductionPercentage), false);
+			if (!GetWorld()->GetTimerManager().IsTimerActive(AbilityCooldownTimerHandles[AbilitySlotAbilities[AbilitySlot]]))
+				GetWorld()->GetTimerManager().SetTimer(AbilityCooldownTimerHandles[AbilitySlotAbilities[AbilitySlot]], AbilityCooldownTimerDelegates[AbilitySlotAbilities[AbilitySlot]], CurrentAbilityCooldowns[AbilitySlotAbilities[AbilitySlot]] * (1 - CooldownReductionPercentage), false);
 		}
 		else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Insufficient Mana [%i < %i]"), (int)CurrentMana, (int)CurrentAbilityManaCosts[AbilitySlot]));
 	}
