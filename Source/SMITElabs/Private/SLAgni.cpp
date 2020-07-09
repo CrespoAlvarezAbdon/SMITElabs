@@ -38,16 +38,18 @@ ASLAgni::ASLAgni()
 	SetAbilityArrays();
 	SetAbilityTargeterArrays();
 
-	FlameWaveDelayTimerDelegate.BindUFunction(this, FName("UseFlameWave"), false);
+	FlameWavePrefireTimerDelegate.BindUFunction(this, FName("UseFlameWave"), false);
 }
 
 void ASLAgni::UseFlameWave()
 {
 	ASLAgniFlameWave* FlameWave = GetWorld()->SpawnActorDeferred<ASLAgniFlameWave>(FlameWaveProjectile, GetTransform());
 	FlameWave->SetOrigin(this);
-	FlameWave->SetDamage(FlameWaveDamage[AbilitySlotPoints[0]]);
+	FlameWave->SetDamage(FlameWaveDamage[AbilitySlotPoints[1]]);
 	FlameWave->SetScaling(FlameWaveScaling);
 	UGameplayStatics::FinishSpawningActor(FlameWave, FlameWave->GetTransform());
+	PrimedAbility = -1;
+	BeginFireBasicAttack();
 }
 
 void ASLAgni::OnBasicAttackHit(TArray<ISLVulnerable*> Targets)
@@ -74,14 +76,18 @@ void ASLAgni::FireAbility(int AbilitySlot)
 			switch (AbilitySlot)
 			{
 			case 0:
-				break;
-			case 1:
-				GetWorld()->GetTimerManager().SetTimer(FlameWaveDelayTimerHandle, FlameWaveDelayTimerDelegate, .5, false);
 				Super::FireAbility(AbilitySlot);
 				break;
+			case 1:
+				GetWorld()->GetTimerManager().SetTimer(FlameWavePrefireTimerHandle, FlameWavePrefireTimerDelegate, .5, false);
+				Super::FireAbility(AbilitySlot);
+				PrimedAbility = AbilitySlot;
+				break;
 			case 2:
+				Super::FireAbility(AbilitySlot);
 				break;
 			case 3:
+				Super::FireAbility(AbilitySlot);
 				break;
 			}
 		}

@@ -444,7 +444,7 @@ void ASLGod::OnEndJump()
 void ASLGod::OnBeginFireBasicAttack()
 {
 	bIsBasicAttacking = true;
-	if (!bIsJumping)
+	if (!bIsJumping && PrimedAbility == -1)
 	{
 		BeginFireBasicAttack();
 	}
@@ -457,7 +457,7 @@ void ASLGod::OnEndFireBasicAttack()
 
 void ASLGod::BeginFireBasicAttack()
 {
-	if (bIsBasicAttacking && !bIsJumping && BasicAttackPenalty == 1)
+	if (bIsBasicAttacking && !bIsJumping && BasicAttackPenalty == 1 && PrimedAbility == -1)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(ProgressionResetTimerHandle);
 		GetWorld()->GetTimerManager().SetTimer(BasicAttackTimerHandle, BasicAttackTimerDelegate, BasicAttackRefireProgression[CurrentProgression] / CurrentBasicAttackSpeed, false);

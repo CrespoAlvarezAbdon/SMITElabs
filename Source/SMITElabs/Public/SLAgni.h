@@ -24,9 +24,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Ability")
 	TSubclassOf<class ASLAgniFlameWave> FlameWaveProjectile;
 
-	FTimerHandle FlameWaveDelayTimerHandle;
+	FTimerHandle FlameWavePrefireTimerHandle;
 
-	FTimerDelegate FlameWaveDelayTimerDelegate;
+	FTimerDelegate FlameWavePrefireTimerDelegate;
+
+	FTimerHandle FlameWavePostfireTimerHandle;
+
+	FTimerDelegate FlameWavePostfireTimerDelegate;
 
 	int CombustionCount{ 0 };
 

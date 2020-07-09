@@ -25,8 +25,13 @@ public:
 
 	void SetScaling(float Val);
 
+	
+
 protected:
 	// Called when the game starts or when spawned
+	UFUNCTION()
+	void DestroyWave();
+
 	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Scene")
@@ -35,13 +40,21 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
 	UStaticMeshComponent* StaticMeshComponent;
 
+	FTimerHandle DestroyWaveTimerHandle;
+
+	FTimerDelegate DestroyWaveTimerDelegate;
+
 	ASLGod* Origin;
+
+	FVector StartingLocation;
 
 	float Damage;
 
 	float Scaling;
 
-	UProjectileMovementComponent* ProjectileMovementComponent;
+	float ProjectileSpeed{ 150 };
+
+	float ProjectileRange{ 50 };
 
 public:	
 	// Called every frame
