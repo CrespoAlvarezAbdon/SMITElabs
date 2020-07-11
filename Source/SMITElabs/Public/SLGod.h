@@ -440,6 +440,8 @@ protected:
 
 	int AbilitySlotAbilities[4] = { 0, 1, 2, 3 };
 
+	bool bCanFireAbility{ true };
+
 	float BaseMaxTargeterRange{ 7000 };
 
 	float CurrentMaxTargeterRange{ BaseMaxTargeterRange };

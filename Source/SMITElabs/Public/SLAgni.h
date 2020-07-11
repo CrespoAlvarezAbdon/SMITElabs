@@ -19,6 +19,10 @@ class SMITELABS_API ASLAgni : public ASLGod
 public:
 	ASLAgni();
 
+	TArray<ASLGod*> GetCombustionTargets();
+
+	void AddCombustionTarget(ASLGod* CombustionTarget);
+
 protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Ability")
@@ -31,6 +35,14 @@ protected:
 	FTimerHandle FlameWavePostfireTimerHandle;
 
 	FTimerDelegate FlameWavePostfireTimerDelegate;
+
+	TArray<FTimerHandle> CombustionTimerHandles;
+
+	TArray<FTimerDelegate> CombustionTimerDelegates;
+
+	TArray<ASLGod*> CombustionTargets;
+
+	TArray<int> CombustionTicks;
 
 	int CombustionCount{ 0 };
 
@@ -50,4 +62,7 @@ protected:
 	virtual void FireAbility(int AbilitySlot) override;
 
 	void ConsumeCombustionStacks();
+
+	UFUNCTION()
+	void DealCombustionDamage(ASLGod* CombustionTarget, FTimerHandle CombustionTimerHandle, int& CombustionTick);
 };

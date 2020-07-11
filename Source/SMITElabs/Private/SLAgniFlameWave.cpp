@@ -15,6 +15,8 @@ ASLAgniFlameWave::ASLAgniFlameWave()
 	StaticMeshComponent->SetupAttachment(RootComponent);
 
 	DestroyWaveTimerDelegate.BindUFunction(this, FName("DestroyWave"), false);
+
+	StaticMeshComponent->OnComponentBeginOverlap.AddDynamic(this, &ASLAgniFlameWave::OnOverlapBegin);
 }
 
 void ASLAgniFlameWave::SetOrigin(ASLGod* Val) { Origin = Val; }
@@ -22,6 +24,8 @@ void ASLAgniFlameWave::SetOrigin(ASLGod* Val) { Origin = Val; }
 void ASLAgniFlameWave::SetDamage(float Val) { Damage = Val; }
 
 void ASLAgniFlameWave::SetScaling(float Val) { Scaling = Val; }
+
+void ASLAgniFlameWave::SetBHasCombustion(bool Val) { bHasCombustion = Val; }
 
 void ASLAgniFlameWave::DestroyWave() { Destroy(); }
 
@@ -31,6 +35,16 @@ void ASLAgniFlameWave::BeginPlay()
 	Super::BeginPlay();
 
 	StartingLocation = GetActorLocation();
+}
+
+void ASLAgniFlameWave::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit)
+{
+	if (Cast<ASLGod>(OtherActor) && !HitGods.Contains(Cast<ASLGod>(OtherActor)) && OtherActor != Origin)
+	{
+		HitGods.Add(Cast<ASLGod>(OtherActor));
+		Cast<ASLGod>(OtherActor)->TakeHealthDamage((Damage + Origin->GetMagicalPower() * Scaling) * (100 / (Origin->CalculateTotalProtections(Cast<ASLGod>(OtherActor)) + 100)), Origin);
+		if (bHasCombustion && !Cast<ASLAgni>(Origin)->GetCombustionTargets().Contains(Cast<ASLGod>(OtherActor))) Cast<ASLAgni>(Origin)->AddCombustionTarget(Cast<ASLGod>(OtherActor));
+	}
 }
 
 // Called every frame
@@ -44,6 +58,6 @@ void ASLAgniFlameWave::Tick(float DeltaTime)
 		GetWorld()->GetTimerManager().SetTimer(DestroyWaveTimerHandle, DestroyWaveTimerDelegate, .5, false);
 		SetActorTickEnabled(false);
 	}
-	SetActorLocation(GetActorLocation() + SceneComponent->GetForwardVector() * ProjectileSpeed * 100 * DeltaTime);
+	else SetActorLocation(GetActorLocation() + SceneComponent->GetForwardVector() * ProjectileSpeed * 100 * DeltaTime);
 }
 

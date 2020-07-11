@@ -444,7 +444,7 @@ void ASLGod::OnEndJump()
 void ASLGod::OnBeginFireBasicAttack()
 {
 	bIsBasicAttacking = true;
-	if (!bIsJumping && PrimedAbility == -1)
+	if (!bIsJumping && bCanFireAbility)
 	{
 		BeginFireBasicAttack();
 	}
@@ -746,35 +746,38 @@ void ASLGod::LevelAbility(int AbilitySlot)
 
 void ASLGod::AimAbility(int AbilitySlot)
 {
-	if (AbilitySlot < NumberOfAbilities)
+	if (bCanFireAbility)
 	{
-		if (AbilitySlotPoints[AbilitySlot] > 0)
+		if (AbilitySlot < NumberOfAbilities)
 		{
-			if (CurrentAbilityCharges[AbilitySlotAbilities[AbilitySlot]] >= 1)
+			if (AbilitySlotPoints[AbilitySlot] > 0)
 			{
-				if ((int)CurrentMana >= (int)CurrentAbilityManaCosts[AbilitySlot])
+				if (CurrentAbilityCharges[AbilitySlotAbilities[AbilitySlot]] >= 1)
 				{
-					CancelAbility();
-					int FirstAbilityTargeterComponentID{ 0 };
-					for (int i = 0; i < AbilitySlotAbilities[AbilitySlot]; i++)
+					if ((int)CurrentMana >= (int)CurrentAbilityManaCosts[AbilitySlot])
 					{
-						FirstAbilityTargeterComponentID += ATCCount[i];
+						CancelAbility();
+						int FirstAbilityTargeterComponentID{ 0 };
+						for (int i = 0; i < AbilitySlotAbilities[AbilitySlot]; i++)
+						{
+							FirstAbilityTargeterComponentID += ATCCount[i];
+						}
+						for (int i = FirstAbilityTargeterComponentID; i < ATCCount[AbilitySlotAbilities[AbilitySlot]] + FirstAbilityTargeterComponentID; i++)
+						{
+							ActiveAbilityTargeterComponentIDs.Add(i);
+							AbilityTargeterComponents[i]->SetVisibility(true);
+						}
+						PrimedAbility = AbilitySlotAbilities[AbilitySlot];
+						if (bFollowGroundTargeter[AbilitySlotAbilities[AbilitySlot]]) CurrentMaxTargeterRange = AbilityMaxRanges[AbilitySlotAbilities[AbilitySlot]] * 100;
 					}
-					for (int i = FirstAbilityTargeterComponentID; i < ATCCount[AbilitySlotAbilities[AbilitySlot]] + FirstAbilityTargeterComponentID; i++)
-					{
-						ActiveAbilityTargeterComponentIDs.Add(i);
-						AbilityTargeterComponents[i]->SetVisibility(true);
-					}
-					PrimedAbility = AbilitySlotAbilities[AbilitySlot];
-					if (bFollowGroundTargeter[AbilitySlotAbilities[AbilitySlot]]) CurrentMaxTargeterRange = AbilityMaxRanges[AbilitySlotAbilities[AbilitySlot]] * 100;
+					else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Insufficient Mana [%i < %i]"), (int)CurrentMana, (int)CurrentAbilityManaCosts[AbilitySlot]));
 				}
-				else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Insufficient Mana [%i < %i]"), (int)CurrentMana, (int)CurrentAbilityManaCosts[AbilitySlot]));
+				else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s is cooling down: %fs"), *AbilityNames[AbilitySlotAbilities[AbilitySlot]], GetWorld()->GetTimerManager().GetTimerRemaining(AbilityCooldownTimerHandles[AbilitySlotAbilities[AbilitySlot]])));
 			}
-			else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s is cooling down: %fs"), *AbilityNames[AbilitySlotAbilities[AbilitySlot]], GetWorld()->GetTimerManager().GetTimerRemaining(AbilityCooldownTimerHandles[AbilitySlotAbilities[AbilitySlot]])));
+			else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("No points in %s."), *AbilityNames[AbilitySlotAbilities[AbilitySlot]]));
 		}
-		else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("No points in %s."), *AbilityNames[AbilitySlotAbilities[AbilitySlot]]));
+		else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Ability Slot %i is empty!"), AbilitySlot + 1));
 	}
-	else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Ability Slot %i is empty!"), AbilitySlot + 1));
 }
 
 void ASLGod::CancelAbility()

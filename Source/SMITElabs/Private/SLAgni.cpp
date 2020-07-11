@@ -41,14 +41,36 @@ ASLAgni::ASLAgni()
 	FlameWavePrefireTimerDelegate.BindUFunction(this, FName("UseFlameWave"), false);
 }
 
+TArray<ASLGod*> ASLAgni::GetCombustionTargets()
+{
+	return CombustionTargets;
+}
+
+void ASLAgni::AddCombustionTarget(ASLGod* CombustionTarget)
+{
+	CombustionTargets.Push(CombustionTarget);
+	CombustionTimerHandles.Push(FTimerHandle());
+	CombustionTicks.Push(6);
+	FTimerDelegate TimerDelegate;
+	TimerDelegate.BindUFunction(this, FName("DealCombustionDamage"), CombustionTargets.Last(), CombustionTimerHandles.Last(), CombustionTicks.Last());
+	GetWorldTimerManager().SetTimer(CombustionTimerHandles.Last(), TimerDelegate, .5, false);
+}
+
 void ASLAgni::UseFlameWave()
 {
 	ASLAgniFlameWave* FlameWave = GetWorld()->SpawnActorDeferred<ASLAgniFlameWave>(FlameWaveProjectile, GetTransform());
 	FlameWave->SetOrigin(this);
-	FlameWave->SetDamage(FlameWaveDamage[AbilitySlotPoints[1]]);
+	FlameWave->SetDamage(FlameWaveDamage[AbilitySlotPoints[1] - 1]);
 	FlameWave->SetScaling(FlameWaveScaling);
+	if (CombustionCount >= 4)
+	{ 
+		ConsumeCombustionStacks();
+		FlameWave->SetBHasCombustion(true);
+	}
+	else FlameWave->SetBHasCombustion(false);
 	UGameplayStatics::FinishSpawningActor(FlameWave, FlameWave->GetTransform());
 	PrimedAbility = -1;
+	bCanFireAbility = true;
 	BeginFireBasicAttack();
 }
 
@@ -69,27 +91,24 @@ void ASLAgni::OnBasicAttackHit(TArray<ISLVulnerable*> Targets)
 
 void ASLAgni::FireAbility(int AbilitySlot)
 {
-	if (AbilitySlotAbilities[AbilitySlot] == PrimedAbility)
+	if (AbilitySlotAbilities[AbilitySlot] == PrimedAbility && (int)CurrentMana >= (int)CurrentAbilityManaCosts[AbilitySlot] && bCanFireAbility)
 	{
-		if ((int)CurrentMana >= (int)CurrentAbilityManaCosts[AbilitySlot])
+		switch (AbilitySlot)
 		{
-			switch (AbilitySlot)
-			{
-			case 0:
-				Super::FireAbility(AbilitySlot);
-				break;
-			case 1:
-				GetWorld()->GetTimerManager().SetTimer(FlameWavePrefireTimerHandle, FlameWavePrefireTimerDelegate, .5, false);
-				Super::FireAbility(AbilitySlot);
-				PrimedAbility = AbilitySlot;
-				break;
-			case 2:
-				Super::FireAbility(AbilitySlot);
-				break;
-			case 3:
-				Super::FireAbility(AbilitySlot);
-				break;
-			}
+		case 0:
+			Super::FireAbility(AbilitySlot);
+			break;
+		case 1:
+			GetWorld()->GetTimerManager().SetTimer(FlameWavePrefireTimerHandle, FlameWavePrefireTimerDelegate, .5, false);
+			Super::FireAbility(AbilitySlot);
+			bCanFireAbility = false;
+			break;
+		case 2:
+			Super::FireAbility(AbilitySlot);
+			break;
+		case 3:
+			Super::FireAbility(AbilitySlot);
+			break;
 		}
 	}
 }
@@ -98,4 +117,22 @@ void ASLAgni::ConsumeCombustionStacks()
 {
 	CombustionCount = 0;
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Combustion Stacks Consumed."));
+}
+
+void ASLAgni::DealCombustionDamage(ASLGod* CombustionTarget, FTimerHandle CombustionTimerHandle, int& CombustionTick)
+{
+	CombustionTarget->TakeHealthDamage((CombustionDamage + GetMagicalPower() * CombustionScaling) * (100 / (CalculateTotalProtections(CombustionTarget) + 100)), this);
+	FTimerDelegate TimerDelegate;
+	--CombustionTick;
+	if(CombustionTick > 0)
+	{
+		TimerDelegate.BindUFunction(this, FName("DealCombustionDamage"), CombustionTarget, CombustionTimerHandle, CombustionTick);
+		GetWorldTimerManager().SetTimer(CombustionTimerHandle, TimerDelegate, .5, false);
+	}
+	else
+	{
+		CombustionTargets.RemoveAt(0);
+		CombustionTimerHandles.RemoveAt(0);
+		CombustionTicks.RemoveAt(0);
+	}
 }

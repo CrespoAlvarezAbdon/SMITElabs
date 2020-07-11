@@ -5,9 +5,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "SMITElabs/Public/SLGod.h"
+#include "SMITElabs/Public/SLAgni.h"
 #include "SLAgniFlameWave.generated.h"
 
 class ASLGod;
+class ASLAgni;
 class UProjectileMovementComponent;
 
 UCLASS()
@@ -25,7 +28,7 @@ public:
 
 	void SetScaling(float Val);
 
-	
+	void SetBHasCombustion(bool Val);
 
 protected:
 	// Called when the game starts or when spawned
@@ -46,7 +49,11 @@ protected:
 
 	ASLGod* Origin;
 
+	TArray<ASLGod*> HitGods;
+
 	FVector StartingLocation;
+
+	bool bHasCombustion;
 
 	float Damage;
 
@@ -55,6 +62,9 @@ protected:
 	float ProjectileSpeed{ 150 };
 
 	float ProjectileRange{ 50 };
+
+	UFUNCTION()
+	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit);
 
 public:	
 	// Called every frame
