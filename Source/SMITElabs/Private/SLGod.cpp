@@ -67,6 +67,8 @@ ASLGod::ASLGod()
 	ProgressionResetTimerDelegate.BindUFunction(this, FName("ResetProgression"), false);
 	FinishProgressionResetTimerDelegate.BindUFunction(this, FName("FinishResetProgression"), false);
 	PerFiveTimerDelegate.BindUFunction(this, FName("SustainPerFive"), false);
+
+	SetActorTickEnabled(false);
 }
 
 bool ASLGod::GetBIsOrder() const
@@ -337,7 +339,7 @@ void ASLGod::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChange
 
 void ASLGod::LookUp(float Val)
 {
-	AddControllerPitchInput(-Val);
+	if (bCanTurn) AddControllerPitchInput(-Val);
 
 	//Old test code used to determine the Ability Aim Targeter position using the camera pitch, changed to use a raycast from the camera instead to match the game.
 	/*
@@ -359,70 +361,78 @@ void ASLGod::LookUp(float Val)
 	FHitResult HitResult;
 	GetWorld()->LineTraceSingleByChannel(HitResult, CameraComponent->GetComponentLocation(), CameraComponent->GetComponentLocation() + PlayerController->GetControlRotation().Vector() * 100000, ECollisionChannel::ECC_GameTraceChannel2);
 
-	TargeterLocationComponent->SetWorldLocation(FVector(HitResult.ImpactPoint.X, HitResult.ImpactPoint.Y, HitResult.ImpactPoint.Z + 5));
+	TargeterLocationComponent->SetRelativeLocation(FVector(FVector::Dist(GetActorLocation(), HitResult.ImpactPoint), 0, -GetActorLocation().Z + 5));
 	if (TargeterLocationComponent->GetRelativeLocation().X > CurrentMaxTargeterRange || HitResult.ImpactPoint == FVector::ZeroVector) TargeterLocationComponent->SetRelativeLocation(FVector(CurrentMaxTargeterRange, 0, TargeterLocationComponent->GetRelativeLocation().Z));
 	AbilityAimComponent->SetRelativeScale3D(FVector(TargeterLocationComponent->GetRelativeLocation().X / (7000 / 4) + 4, TargeterLocationComponent->GetRelativeLocation().X / (7000 / 4) + 4, AbilityAimComponent->GetRelativeScale3D().Z));
 }
 
 void ASLGod::TurnRight(float Val)
 {
-	AddControllerYawInput(Val);
+	if (bCanTurn) AddControllerYawInput(Val);
 }
 
 void ASLGod::MoveForward(float Val)
 {
-	if (Val != 0)
+	if (bCanMove)
 	{
-		if (PlayerController->IsInputKeyDown(FKey("A")))
+		if (Val != 0)
 		{
-			if (Val == 1)
+			if (PlayerController->IsInputKeyDown(FKey("A")))
 			{
-				MoveDiagonally(1, -1); return;
+				if (Val == 1)
+				{
+					MoveDiagonally(1, -1); return;
+				}
+				MoveDiagonally(-1, -1); return;
 			}
-			MoveDiagonally(-1, -1); return;
-		}
-		else if (PlayerController->IsInputKeyDown(FKey("D")))
-		{
-			if (Val == 1)
+			else if (PlayerController->IsInputKeyDown(FKey("D")))
 			{
-				MoveDiagonally(1, 1); return;
+				if (Val == 1)
+				{
+					MoveDiagonally(1, 1); return;
+				}
+				MoveDiagonally(-1, 1); return;
 			}
-			MoveDiagonally(-1, 1); return;
+			if (BasicAttackPenalty < FMath::Abs(Val) && !bFatalis)
+			{
+				if (Val > 0) Val = BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
+				else Val = -BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
+			}
+			else Val = Val * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
+			AddMovementInput(FVector(CameraComponent->GetForwardVector().X, CameraComponent->GetForwardVector().Y, 0), Val);
 		}
-		if (BasicAttackPenalty < FMath::Abs(Val) && !bFatalis)
-		{ 
-			if (Val > 0) Val = BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed; 
-			else Val = -BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed; 
-		}
-		else Val = Val * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
-		AddMovementInput(StaticMeshComponent->GetForwardVector(), Val);
 	}
 }
 
 void ASLGod::MoveRight(float Val)
 {
-	if (Val != 0)
+	if (bCanMove)
 	{
-		if (PlayerController->IsInputKeyDown(FKey("W")) || PlayerController->IsInputKeyDown(FKey("S"))) return;
-		if (BasicAttackPenalty < StrafePenalty && !bFatalis)
+		if (Val != 0)
 		{
-			if (Val > 0) Val = BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
-			else Val = -BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
+			if (PlayerController->IsInputKeyDown(FKey("W")) || PlayerController->IsInputKeyDown(FKey("S"))) return;
+			if (BasicAttackPenalty < StrafePenalty && !bFatalis)
+			{
+				if (Val > 0) Val = BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
+				else Val = -BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
+			}
+			else Val = Val * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
+			AddMovementInput(FVector(CameraComponent->GetRightVector().X, CameraComponent->GetRightVector().Y, 0), Val);
 		}
-		else Val = Val * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
-		AddMovementInput(StaticMeshComponent->GetRightVector(), Val);
-
 	}
 }
 
 void ASLGod::MoveDiagonally(int ValX, int ValY)
 {
-	float Val{ 0 };
-	if (BasicAttackPenalty < StrafePenalty && !bFatalis) Val = BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
-	else Val = 0.8 * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
-	FVector Vec = FVector(StaticMeshComponent->GetForwardVector() * ValX + StaticMeshComponent->GetRightVector() * ValY);
-	Vec.Normalize();
-	AddMovementInput(Vec, Val);
+	if (bCanMove)
+	{
+		float Val{ 0 };
+		if (BasicAttackPenalty < StrafePenalty && !bFatalis) Val = BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
+		else Val = 0.8 * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
+		FVector Vec = FVector(FVector(CameraComponent->GetForwardVector().X, CameraComponent->GetForwardVector().Y, 0) * ValX + FVector(CameraComponent->GetRightVector().X, CameraComponent->GetRightVector().Y, 0) * ValY);
+		Vec.Normalize();
+		AddMovementInput(Vec, Val);
+	}
 }
 
 void ASLGod::OnBeginJump()
@@ -444,7 +454,7 @@ void ASLGod::OnEndJump()
 void ASLGod::OnBeginFireBasicAttack()
 {
 	bIsBasicAttacking = true;
-	if (!bIsJumping && bCanFireAbility)
+	if (!bIsJumping && bCanBasicAttack)
 	{
 		BeginFireBasicAttack();
 	}
@@ -457,7 +467,7 @@ void ASLGod::OnEndFireBasicAttack()
 
 void ASLGod::BeginFireBasicAttack()
 {
-	if (bIsBasicAttacking && !bIsJumping && BasicAttackPenalty == 1 && PrimedAbility == -1)
+	if (bIsBasicAttacking && !bIsJumping && BasicAttackPenalty == 1 && bCanBasicAttack)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(ProgressionResetTimerHandle);
 		GetWorld()->GetTimerManager().SetTimer(BasicAttackTimerHandle, BasicAttackTimerDelegate, BasicAttackRefireProgression[CurrentProgression] / CurrentBasicAttackSpeed, false);

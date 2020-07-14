@@ -3,6 +3,7 @@
 
 #include "SLAgni.h"
 #include "SMITElabs/Public/SLAgniFlameWave.h"
+#include "SMITElabs/Public/SLAgniPathOfFlamesTile.h"
 
 ASLAgni::ASLAgni()
 {
@@ -71,7 +72,47 @@ void ASLAgni::UseFlameWave()
 	UGameplayStatics::FinishSpawningActor(FlameWave, FlameWave->GetTransform());
 	PrimedAbility = -1;
 	bCanFireAbility = true;
+	bCanBasicAttack = true;
 	BeginFireBasicAttack();
+}
+
+void ASLAgni::UsePathOfFlames()
+{
+	bCanMove = false;
+	bCanFireAbility = false;
+	bCanBasicAttack = false;
+	bUseControllerRotationYaw = false;
+	CharacterMovementComponent->BrakingFrictionFactor = 0;
+	bIsUsingPathOfFlames = true;
+	SetActorTickEnabled(true);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+}
+
+void ASLAgni::SpawnPathOfFlamesTile()
+{
+// 	FTransform SpawnTransform = GetTransform();
+// 	SpawnTransform.SetLocation(GetActorLocation() - GetVelocity() * (PathOfFlamesCurrentTime - .1 * (6 - PathOfFlamesTilesRemaining)));
+// 	ASLAgniPathOfFlamesTile* FlameTile = GetWorld()->SpawnActor<ASLAgniPathOfFlamesTile>(PathOfFlamesTile, SpawnTransform);
+// 	FlameTile->SetLifeSpan(2);
+// 	--PathOfFlamesTilesRemaining;
+// 	if (PathOfFlamesTilesRemaining % 2 == 0) FlameTile->SetTileMaterial(MPathOfFlamesLight);
+// 	else FlameTile->SetTileMaterial(MPathOfFlamesDark);
+// 	if (PathOfFlamesTilesRemaining > 0) GetWorldTimerManager().SetTimer(PathOfFlamesTimerHandle, this, &ASLAgni::SpawnPathOfFlamesTile, .1, false);
+// 	else EndPathOfFlames();
+}
+
+void ASLAgni::EndPathOfFlames()
+{
+	PathOfFlamesSpawnDistance = 0;
+	PathOfFlamesDistanceTravelled = 0;
+	bCanMove = true;
+	bCanFireAbility = true;
+	bCanBasicAttack = true;
+	CharacterMovementComponent->bUseControllerDesiredRotation = true;
+	CharacterMovementComponent->BrakingFrictionFactor = 1.5;
+	bIsUsingPathOfFlames = false;
+	PrimedAbility = -1;
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
 }
 
 void ASLAgni::OnBasicAttackHit(TArray<ISLVulnerable*> Targets)
@@ -99,11 +140,13 @@ void ASLAgni::FireAbility(int AbilitySlot)
 			Super::FireAbility(AbilitySlot);
 			break;
 		case 1:
-			GetWorld()->GetTimerManager().SetTimer(FlameWavePrefireTimerHandle, FlameWavePrefireTimerDelegate, .5, false);
+			GetWorldTimerManager().SetTimer(FlameWavePrefireTimerHandle, FlameWavePrefireTimerDelegate, .5, false);
 			Super::FireAbility(AbilitySlot);
 			bCanFireAbility = false;
+			bCanBasicAttack = false;
 			break;
 		case 2:
+			UsePathOfFlames();
 			Super::FireAbility(AbilitySlot);
 			break;
 		case 3:
@@ -134,5 +177,49 @@ void ASLAgni::DealCombustionDamage(ASLGod* CombustionTarget, FTimerHandle Combus
 		CombustionTargets.RemoveAt(0);
 		CombustionTimerHandles.RemoveAt(0);
 		CombustionTicks.RemoveAt(0);
+	}
+}
+
+void ASLAgni::Tick(float DeltaTime)
+{
+	if (bIsUsingPathOfFlames)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("%f, %f"), PathOfFlamesDistanceTravelled, PathOfFlamesSpawnDistance));
+		if (PathOfFlamesSpawnDistance != 0)
+		{
+			PathOfFlamesDistanceTravelled += 10000 * DeltaTime;
+			while (PathOfFlamesDistanceTravelled >= PathOfFlamesSpawnDistance)
+			{
+				FTransform SpawnTransform = GetActorTransform();
+				SpawnTransform.SetLocation(GetActorLocation() - GetActorForwardVector() * (PathOfFlamesDistanceTravelled - PathOfFlamesSpawnDistance));
+				ASLAgniPathOfFlamesTile* FlameTile = GetWorld()->SpawnActor<ASLAgniPathOfFlamesTile>(PathOfFlamesTile, SpawnTransform);
+				if ((int)PathOfFlamesSpawnDistance % 2000 == 1000) FlameTile->SetTileMaterial(MPathOfFlamesLight);
+				else FlameTile->SetTileMaterial(MPathOfFlamesDark);
+				FlameTile->SetLifeSpan(3);
+				if (PathOfFlamesDistanceTravelled >= 5000)
+				{
+					SetActorLocation(GetActorLocation() - GetActorForwardVector() * (PathOfFlamesDistanceTravelled - PathOfFlamesSpawnDistance));
+					EndPathOfFlames();
+					return;
+				}
+				PathOfFlamesSpawnDistance += 1000;
+			}
+		}
+		else
+		{
+			ASLAgniPathOfFlamesTile* FlameTile = GetWorld()->SpawnActor<ASLAgniPathOfFlamesTile>(PathOfFlamesTile, GetActorTransform());
+			if ((int)PathOfFlamesSpawnDistance % 2000 == 1000) FlameTile->SetTileMaterial(MPathOfFlamesLight);
+			else FlameTile->SetTileMaterial(MPathOfFlamesDark);
+			FlameTile->SetLifeSpan(3);
+			PathOfFlamesSpawnDistance += 1000;
+		}
+		CharacterMovementComponent->Velocity = GetActorForwardVector() * 10000;
+		PathOfFlamesPreviousLocation = GetActorLocation();
+	}
+	else if (FMath::IsNearlyEqual(GetControlRotation().GetDenormalized().Yaw, StaticMeshComponent->GetComponentRotation().GetDenormalized().Yaw, .1f))
+	{
+		bUseControllerRotationYaw = true;
+		CharacterMovementComponent->bUseControllerDesiredRotation = false;
+		SetActorTickEnabled(false);
 	}
 }

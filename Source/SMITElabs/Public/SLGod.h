@@ -228,6 +228,8 @@ protected:
 
 #pragma region Offense
 
+	bool bCanBasicAttack{ true };
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Attack")
 	float BaseBasicAttackSpeed{ 1 };
 
@@ -411,6 +413,10 @@ protected:
 
 	bool bIsJumping{ false };
 
+	bool bCanMove{ true };
+
+	bool bCanTurn{ true };
+
 #pragma endregion
 
 #pragma region Identity
@@ -563,5 +569,4 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 };

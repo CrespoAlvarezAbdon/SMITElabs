@@ -7,6 +7,7 @@
 #include "SLAgni.generated.h"
 
 class ASLAgniFlameWave;
+class ASLAgniPathOfFlamesTile;
 
 /**
  * 
@@ -25,16 +26,25 @@ public:
 
 protected:
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Material")
+	UMaterial* MPathOfFlamesLight;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Material")
+	UMaterial* MPathOfFlamesDark;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Ability")
 	TSubclassOf<class ASLAgniFlameWave> FlameWaveProjectile;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Ability")
+	TSubclassOf<class ASLAgniPathOfFlamesTile> PathOfFlamesTile;
 
 	FTimerHandle FlameWavePrefireTimerHandle;
 
 	FTimerDelegate FlameWavePrefireTimerDelegate;
 
-	FTimerHandle FlameWavePostfireTimerHandle;
+	FTimerHandle PathOfFlamesTimerHandle;
 
-	FTimerDelegate FlameWavePostfireTimerDelegate;
+	FTimerDelegate PathOfFlamesTimerDelegate;
 
 	TArray<FTimerHandle> CombustionTimerHandles;
 
@@ -54,8 +64,23 @@ protected:
 
 	float FlameWaveScaling{ .65 };
 
+	bool bIsUsingPathOfFlames{ false };
+
+	float PathOfFlamesSpawnDistance{ 0 };
+
+	float PathOfFlamesDistanceTravelled{ 0 };
+
+	FVector PathOfFlamesPreviousLocation;
+
 	UFUNCTION()
 	void UseFlameWave();
+
+	void UsePathOfFlames();
+
+	UFUNCTION()
+	void SpawnPathOfFlamesTile();
+
+	void EndPathOfFlames();
 
 	virtual void OnBasicAttackHit(TArray<ISLVulnerable*> Targets) override;
 
@@ -65,4 +90,8 @@ protected:
 
 	UFUNCTION()
 	void DealCombustionDamage(ASLGod* CombustionTarget, FTimerHandle CombustionTimerHandle, int& CombustionTick);
+
+public:
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
 };
