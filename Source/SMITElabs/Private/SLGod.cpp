@@ -122,6 +122,11 @@ void ASLGod::SetGodLevel(int Val)
 	SetBaseStatistics();
 }
 
+USceneComponent* ASLGod::GetTargeterLocationComponent()
+{
+	return TargeterLocationComponent;
+}
+
 void ASLGod::SetBaseStatistics()
 {
 	SetMovementSpeed(BaseMovementSpeed + MovementSpeedPerLevel * GodLevel);
@@ -399,7 +404,7 @@ void ASLGod::MoveForward(float Val)
 				else Val = -BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
 			}
 			else Val = Val * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
-			AddMovementInput(FVector(CameraComponent->GetForwardVector().X, CameraComponent->GetForwardVector().Y, 0), Val);
+			AddMovementInput(FRotator(0, CameraComponent->GetComponentRotation().Yaw, 0).Vector(), Val);
 		}
 	}
 }
@@ -417,7 +422,7 @@ void ASLGod::MoveRight(float Val)
 				else Val = -BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
 			}
 			else Val = Val * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
-			AddMovementInput(FVector(CameraComponent->GetRightVector().X, CameraComponent->GetRightVector().Y, 0), Val);
+			AddMovementInput(FRotator(0, CameraComponent->GetComponentRotation().Yaw + 90, 0).Vector(), Val);
 		}
 	}
 }
@@ -429,7 +434,7 @@ void ASLGod::MoveDiagonally(int ValX, int ValY)
 		float Val{ 0 };
 		if (BasicAttackPenalty < StrafePenalty && !bFatalis) Val = BasicAttackPenalty * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
 		else Val = 0.8 * DiminishedMovementSpeed / MaximumDiminishedMovementSpeed;
-		FVector Vec = FVector(FVector(CameraComponent->GetForwardVector().X, CameraComponent->GetForwardVector().Y, 0) * ValX + FVector(CameraComponent->GetRightVector().X, CameraComponent->GetRightVector().Y, 0) * ValY);
+		FVector Vec = FVector(FRotator(0, CameraComponent->GetComponentRotation().Yaw, 0).Vector() * ValX + FRotator(0, CameraComponent->GetComponentRotation().Yaw + 90, 0).Vector() * ValY);
 		Vec.Normalize();
 		AddMovementInput(Vec, Val);
 	}
@@ -756,6 +761,7 @@ void ASLGod::LevelAbility(int AbilitySlot)
 
 void ASLGod::AimAbility(int AbilitySlot)
 {
+	AbilityKeyDown = AbilitySlot;
 	if (bCanFireAbility)
 	{
 		if (AbilitySlot < NumberOfAbilities)
@@ -812,22 +818,29 @@ void ASLGod::OnAbilityCooldownEnded(int AbilityID)
 
 	if (MaxAbilityCharges[AbilityID] <= 1) GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s is no longer on cooldown!"), *AbilityNames[AbilityID]));
 	else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s has gained a charge! %i/%i charges remaining."), *AbilityNames[AbilityID], CurrentAbilityCharges[AbilityID], MaxAbilityCharges[AbilityID]));
+
+	if (AbilitySlots[AbilityID] == AbilityKeyDown) AimAbility(AbilitySlots[AbilityID]);
+}
+
+void ASLGod::StartAbilityCooldown(int AbilitySlot)
+{
+	FString AbilityChargeMessage;
+	if (MaxAbilityCharges[AbilitySlotAbilities[AbilitySlot]] > 1) AbilityChargeMessage = FString::Printf(TEXT("; %i/%i charges remaining."), CurrentAbilityCharges[AbilitySlotAbilities[AbilitySlot]] - 1, MaxAbilityCharges[AbilitySlotAbilities[AbilitySlot]]);
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s used! Mana Cost : %i [%i -> %i]%s"), *AbilityNames[AbilitySlotAbilities[AbilitySlot]], (int)CurrentAbilityManaCosts[AbilitySlot], (int)CurrentMana, (int)CurrentMana - (int)CurrentAbilityManaCosts[AbilitySlot], *AbilityChargeMessage));
+	CurrentMana -= CurrentAbilityManaCosts[AbilitySlot];
+	--CurrentAbilityCharges[AbilitySlotAbilities[AbilitySlot]];
+	if (!GetWorld()->GetTimerManager().IsTimerActive(AbilityCooldownTimerHandles[AbilitySlotAbilities[AbilitySlot]]))
+		GetWorld()->GetTimerManager().SetTimer(AbilityCooldownTimerHandles[AbilitySlotAbilities[AbilitySlot]], AbilityCooldownTimerDelegates[AbilitySlotAbilities[AbilitySlot]], CurrentAbilityCooldowns[AbilitySlotAbilities[AbilitySlot]] * (1 - CooldownReductionPercentage), false);
 }
 
 void ASLGod::FireAbility(int AbilitySlot)
 {
+	AbilityKeyDown = -1;
 	if (AbilitySlotAbilities[AbilitySlot] == PrimedAbility)
 	{ 
 		if ((int)CurrentMana >= (int)CurrentAbilityManaCosts[AbilitySlot])
 		{
-			CancelAbility();
-			FString AbilityChargeMessage;
-			if (MaxAbilityCharges[AbilitySlotAbilities[AbilitySlot]] > 1) AbilityChargeMessage = FString::Printf(TEXT("; %i/%i charges remaining."), CurrentAbilityCharges[AbilitySlotAbilities[AbilitySlot]] - 1, MaxAbilityCharges[AbilitySlotAbilities[AbilitySlot]]);
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s used! Mana Cost : %i [%i -> %i]%s"), *AbilityNames[AbilitySlotAbilities[AbilitySlot]], (int)CurrentAbilityManaCosts[AbilitySlot], (int)CurrentMana, (int)CurrentMana - (int)CurrentAbilityManaCosts[AbilitySlot], *AbilityChargeMessage));
-			CurrentMana -= CurrentAbilityManaCosts[AbilitySlot];
-			--CurrentAbilityCharges[AbilitySlotAbilities[AbilitySlot]];
-			if (!GetWorld()->GetTimerManager().IsTimerActive(AbilityCooldownTimerHandles[AbilitySlotAbilities[AbilitySlot]]))
-				GetWorld()->GetTimerManager().SetTimer(AbilityCooldownTimerHandles[AbilitySlotAbilities[AbilitySlot]], AbilityCooldownTimerDelegates[AbilitySlotAbilities[AbilitySlot]], CurrentAbilityCooldowns[AbilitySlotAbilities[AbilitySlot]] * (1 - CooldownReductionPercentage), false);
+			StartAbilityCooldown(AbilitySlot);
 		}
 		else GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Insufficient Mana [%i < %i]"), (int)CurrentMana, (int)CurrentAbilityManaCosts[AbilitySlot]));
 	}
@@ -848,6 +861,24 @@ void ASLGod::TakeHealthDamage(float Val, ISLDangerous* Origin)
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s has been slain by %s!"), *this->GetName(), *Cast<AActor>(Origin)->GetName()));
 		Destroy();
 	}
+}
+
+void ASLGod::BecomeStunned(float Duration)
+{
+	bCanBasicAttack = false;
+	bCanMove = false;
+	bCanTurn = false;
+	bCanFireAbility = false;
+	CharacterMovementComponent->Velocity = FVector::ZeroVector;
+	GetWorldTimerManager().SetTimer(StunTimerHandle, this, &ASLGod::RemoveStun, Duration, false);
+}
+
+void ASLGod::RemoveStun()
+{
+	bCanBasicAttack = true;
+	bCanMove = true;
+	bCanTurn = true;
+	bCanFireAbility = true;
 }
 
 // Called to bind functionality to input

@@ -27,6 +27,10 @@ public:
 
 	virtual void TakeHealthDamage(float Val, ISLDangerous* Origin) = 0;
 
+	virtual void BecomeStunned(float Duration) = 0;
+
+	virtual void RemoveStun() = 0;
+
 	virtual float GetPhysicalProtections() const = 0;
 
 	virtual float GetMagicalProtections() const = 0;

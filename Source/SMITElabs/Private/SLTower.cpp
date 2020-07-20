@@ -130,6 +130,16 @@ float ASLTower::CalculateTotalProtections(ISLVulnerable* Targeted) const
 	return (Targeted->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() > 0 ? (Targeted->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() : 0;
 }
 
+void ASLTower::BecomeStunned(float Duration)
+{
+	return;
+}
+
+void ASLTower::RemoveStun()
+{
+	return;
+}
+
 // Called when the game starts or when spawned
 void ASLTower::BeginPlay()
 {

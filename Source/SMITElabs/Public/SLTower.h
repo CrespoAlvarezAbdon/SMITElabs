@@ -58,6 +58,10 @@ public:
 
 	virtual float CalculateTotalProtections(ISLVulnerable* Targeted) const override;
 
+	virtual void BecomeStunned(float Duration) override;
+
+	virtual void RemoveStun() override;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -209,6 +213,7 @@ protected:
 
 	UFUNCTION()
 	void HealTower();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

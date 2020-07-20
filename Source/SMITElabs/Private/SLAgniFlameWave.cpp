@@ -39,12 +39,7 @@ void ASLAgniFlameWave::BeginPlay()
 
 void ASLAgniFlameWave::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit)
 {
-	if (Cast<ASLGod>(OtherActor) && !HitGods.Contains(Cast<ASLGod>(OtherActor)) && OtherActor != Origin)
-	{
-		HitGods.Add(Cast<ASLGod>(OtherActor));
-		Cast<ASLGod>(OtherActor)->TakeHealthDamage((Damage + Origin->GetMagicalPower() * Scaling) * (100 / (Origin->CalculateTotalProtections(Cast<ASLGod>(OtherActor)) + 100)), Origin);
-		if (bHasCombustion && !Cast<ASLAgni>(Origin)->GetCombustionTargets().Contains(Cast<ASLGod>(OtherActor))) Cast<ASLAgni>(Origin)->AddCombustionTarget(Cast<ASLGod>(OtherActor));
-	}
+	
 }
 
 // Called every frame

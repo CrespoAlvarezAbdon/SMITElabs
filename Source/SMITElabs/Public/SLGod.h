@@ -63,6 +63,8 @@ public:
 
 	void SetGodLevel(int Val);
 
+	USceneComponent* GetTargeterLocationComponent();
+
 	virtual float GetCurrentBasicAttackDamage() const override;
 
 	virtual float GetPhysicalPower() const override;
@@ -130,20 +132,26 @@ public:
 
 	void SetAbilityTargeterArrays();
 
-	void LevelAbility(int AbilitySlot);
+	virtual void LevelAbility(int AbilitySlot);
 
 	void AimAbility(int AbilitySlot);
 
 	void CancelAbility();
 
 	UFUNCTION()
-	void OnAbilityCooldownEnded(int AbilityID);
+	virtual void OnAbilityCooldownEnded(int AbilityID);
+
+	void StartAbilityCooldown(int AbilitySlot);
 
 	virtual void FireAbility(int AbilitySlot);
 
 	virtual void OnBasicAttackHit(TArray<ISLVulnerable*> Targets) override;
 
 	virtual void TakeHealthDamage(float Val, ISLDangerous* Origin) override;
+
+	virtual void BecomeStunned(float Duration) override;
+
+	virtual void RemoveStun() override;
 
 protected:
 	// Called when the game starts or when spawned
@@ -225,6 +233,8 @@ protected:
 	FTimerHandle JumpTimerHandle;
 
 	FTimerDelegate JumpTimerDelegate;
+
+	FTimerHandle StunTimerHandle;
 
 #pragma region Offense
 
@@ -413,8 +423,10 @@ protected:
 
 	bool bIsJumping{ false };
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	bool bCanMove{ true };
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	bool bCanTurn{ true };
 
 #pragma endregion
@@ -489,6 +501,8 @@ protected:
 	TArray<FTimerDelegate> AbilityCooldownTimerDelegates;
 
 	int PrimedAbility{ -1 };
+
+	int AbilityKeyDown{ -1 };
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, EditFixedSize, Category = "Ability")
 	TArray<FString> AbilityNames = { "Noxious Fumes", "Flame Wave", "Path of Flames", "Rain Fire" };
