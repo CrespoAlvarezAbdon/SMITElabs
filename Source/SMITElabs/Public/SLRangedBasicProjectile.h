@@ -10,6 +10,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/PrimitiveComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "SLRangedBasicProjectile.generated.h"
 
 class USceneComponent;
@@ -18,6 +19,7 @@ class USphereComponent;
 class UBoxComponent;
 class UArrowComponent;
 class UPrimitiveComponent;
+class UProjectileMovementComponent;
 class ISLDangerous;
 class ISLIdentifiable;
 class AActor;

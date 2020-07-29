@@ -119,11 +119,15 @@ void ASLRangedBasicProjectile::OnWallHit(UPrimitiveComponent* OverlappedComp, AA
 void ASLRangedBasicProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (FVector::Dist(StartingLocation, GetActorLocation() + SceneComponent->GetForwardVector() * ProjectileSpeed * 100 * DeltaTime) >= (ProjectileRange - ProjectileLength) * 100)
+	int NumberOfMovements{ (int)(DeltaTime * 100) };
+	if (NumberOfMovements == 0) ++NumberOfMovements;
+	for (int i = 0; i < NumberOfMovements; i++)
 	{
-		SetActorLocation(StartingLocation + SceneComponent->GetForwardVector() * (ProjectileRange - ProjectileLength) * 100);
-		Destroy();
+		if (FVector::Dist(StartingLocation, GetActorLocation() + SceneComponent->GetForwardVector() * ProjectileSpeed * 100 * (DeltaTime / NumberOfMovements)) >= (ProjectileRange - ProjectileLength) * 100)
+		{
+			SetActorLocation(StartingLocation + SceneComponent->GetForwardVector() * (ProjectileRange - ProjectileLength) * 100);
+			Destroy();
+		}
+		SetActorLocation(GetActorLocation() + SceneComponent->GetForwardVector() * ProjectileSpeed * 100 * (DeltaTime / NumberOfMovements));
 	}
-	SetActorLocation(GetActorLocation() + SceneComponent->GetForwardVector() * ProjectileSpeed * 100 * DeltaTime);
 }
