@@ -208,13 +208,17 @@ float ASLGod::CalculateTotalProtections(ISLVulnerable* Targeted) const
 	return (Targeted->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() > 0 ? (Targeted->GetMagicalProtections()) * (1 - GetPercentageMagicalPenetration()) - GetFlatMagicalPenetration() : 0;
 }
 
+int ASLGod::GetAbilitySlotAbility(int Index)
+{
+	return AbilitySlotAbilities[Index];
+}
+
 // Called when the game starts or when spawned
 void ASLGod::BeginPlay()
 {
 	Super::BeginPlay();
 
 	SetBaseStatistics();
-
 	{
 		int j = 0;
 		int k = 0;
@@ -253,6 +257,8 @@ void ASLGod::BeginPlay()
 
 	if (this == UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
 	{
+		PlayerHUD = CreateWidget<USLPlayerHUD>(GetWorld(), PlayerHUDClass);
+		PlayerHUD->AddToViewport();
 		PlayerController->SetControlRotation(FRotator(-35, 0, 0));
 		RangeLineComponent->SetVisibility(true);
 		AbilityAimComponent->SetVisibility(true);

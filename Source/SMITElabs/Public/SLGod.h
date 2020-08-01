@@ -18,6 +18,7 @@
 #include "SMITElabs/Public/SLDangerous.h"
 #include "SMITElabs/Public/SLMobile.h"
 #include "SMITElabs/Public/SLIdentifiable.h"
+#include "SMITElabs/Public/SLPLayerHUD.h"
 #include "SLGod.generated.h"
 
 class UStaticMeshComponent;
@@ -35,6 +36,7 @@ class ISLVulnerable;
 class ISLDangerous;
 class ISLMobile;
 class ISLIdentifiable;
+class USLPlayerHUD;
 struct FTimerHandle;
 
 DECLARE_DELEGATE_OneParam(FAbilityDelegate, int);
@@ -84,6 +86,9 @@ public:
 	virtual bool GetIsPhysicalDamage() const override;
 
 	virtual float CalculateTotalProtections(ISLVulnerable* Targeted) const override;
+
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	int GetAbilitySlotAbility(int Index);
 
 	void LookUp(float Val);
 
@@ -160,6 +165,11 @@ protected:
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 
 	void SetBaseStatistics();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class USLPlayerHUD> PlayerHUDClass;
+
+	USLPlayerHUD* PlayerHUD;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
 	UStaticMeshComponent* StaticMeshComponent;
@@ -496,6 +506,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
 	TArray<UStaticMesh*> AbilityTargeterMeshes;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Ability")
 	TArray<FTimerHandle> AbilityCooldownTimerHandles;
 
 	TArray<FTimerDelegate> AbilityCooldownTimerDelegates;
