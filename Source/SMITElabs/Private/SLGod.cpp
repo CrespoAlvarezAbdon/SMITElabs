@@ -213,6 +213,11 @@ int ASLGod::GetAbilitySlotAbility(int Index)
 	return AbilitySlotAbilities[Index];
 }
 
+int ASLGod::GetAbilitySlotPointCount(int Index)
+{
+	return AbilitySlotPoints[Index];
+}
+
 // Called when the game starts or when spawned
 void ASLGod::BeginPlay()
 {
@@ -726,6 +731,7 @@ void ASLGod::LevelAbility(int AbilitySlot)
 				++AbilitySlotPoints[AbilitySlot];
 				--AbilityPoints;
 				GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability Slot %i is now Level %i! You have %i Ability Points left."), AbilitySlot + 1, AbilitySlotPoints[AbilitySlot], AbilityPoints));
+				PlayerHUD->OnAbilitySlotLevelled(AbilitySlot);
 				for (int i = 0; i < AbilitySlots.Num(); i++)
 				{
 					if (AbilitySlots[i] == AbilitySlot)

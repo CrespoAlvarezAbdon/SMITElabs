@@ -90,6 +90,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 	int GetAbilitySlotAbility(int Index);
 
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	int GetAbilitySlotPointCount(int Index);
+
 	void LookUp(float Val);
 
 	void TurnRight(float Val);
