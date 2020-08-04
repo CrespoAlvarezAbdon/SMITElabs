@@ -167,8 +167,6 @@ protected:
 
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 
-	void SetBaseStatistics();
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<class USLPlayerHUD> PlayerHUDClass;
 
@@ -572,6 +570,7 @@ protected:
 
 	TArray<float> CurrentAbilityCooldowns = { AbilityRankOneCooldowns[0], AbilityRankOneCooldowns[1], AbilityRankOneCooldowns[2], AbilityRankOneCooldowns[3] };
 
+	UPROPERTY(BlueprintReadOnly, Category = "Ability")
 	TArray<float> CurrentAbilityManaCosts = { AbilityRankOneManaCosts[0], AbilityRankOneManaCosts[1], AbilityRankOneManaCosts[2], AbilityRankOneManaCosts[3] };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")

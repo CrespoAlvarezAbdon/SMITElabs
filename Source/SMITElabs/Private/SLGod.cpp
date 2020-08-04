@@ -122,16 +122,7 @@ void ASLGod::SetBasicAttackSpeed(float Val)
 void ASLGod::SetGodLevel(int Val)
 {
 	GodLevel = Val;
-	SetBaseStatistics();
-}
 
-USceneComponent* ASLGod::GetTargeterLocationComponent()
-{
-	return TargeterLocationComponent;
-}
-
-void ASLGod::SetBaseStatistics()
-{
 	SetMovementSpeed(BaseMovementSpeed + MovementSpeedPerLevel * GodLevel);
 	CurrentBasicAttackSpeed = BaseBasicAttackSpeed + (BaseBasicAttackSpeed * BasicAttackSpeedPerLevel) * GodLevel;
 	CurrentBasicAttackDamage = BaseBasicAttackDamage + BasicAttackDamagePerLevel * GodLevel;
@@ -143,6 +134,7 @@ void ASLGod::SetBaseStatistics()
 	CurrentMagicalProtections = BaseMagicalProtections + MagicalProtectionsPerLevel * GodLevel;
 	CurrentHealthPerFive = BaseHealthPerFive + HealthPerFivePerLevel * GodLevel;
 	CurrentManaPerFive = BaseManaPerFive + ManaPerFivePerLevel * GodLevel;
+	for (int i = 0; i < 4; i++) AbilitySlotPoints[i] = 0;
 	AbilityPoints = GodLevel;
 
 	if (this == UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
@@ -158,6 +150,13 @@ void ASLGod::SetBaseStatistics()
 		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("Undimimished Movement Speed: %f, Diminished Movement Speed: %f"), UndiminishedMovementSpeed, DiminishedMovementSpeed));
 		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("%s Level %i"), *UnitName, GodLevel));
 	}
+
+	if (PlayerHUD) PlayerHUD->OnGodLevelSetByForce();
+}
+
+USceneComponent* ASLGod::GetTargeterLocationComponent()
+{
+	return TargeterLocationComponent;
 }
 
 float ASLGod::GetCurrentBasicAttackDamage() const
@@ -226,7 +225,7 @@ void ASLGod::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetBaseStatistics();
+	SetGodLevel(GodLevel);
 	{
 		int j = 0;
 		int k = 0;
@@ -739,7 +738,6 @@ void ASLGod::LevelAbility(int AbilitySlot)
 				++AbilitySlotPoints[AbilitySlot];
 				--AbilityPoints;
 				GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("Ability Slot %i is now Level %i! You have %i Ability Points left."), AbilitySlot + 1, AbilitySlotPoints[AbilitySlot], AbilityPoints));
-				PlayerHUD->OnAbilitySlotLevelled(AbilitySlot);
 				for (int i = 0; i < AbilitySlots.Num(); i++)
 				{
 					if (AbilitySlots[i] == AbilitySlot)
@@ -771,6 +769,7 @@ void ASLGod::LevelAbility(int AbilitySlot)
 						}
 					}
 				}
+				PlayerHUD->OnAbilitySlotLevelled(AbilitySlot);
 			}
 			else GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Current Rank of Ability Slot %i [%i] isn't less than your God Level divided by 2 [%i/2], cannot be levelled."), AbilitySlot + 1, AbilitySlotPoints[AbilitySlot], GodLevel));
 		}

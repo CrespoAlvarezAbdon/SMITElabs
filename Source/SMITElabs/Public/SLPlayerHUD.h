@@ -23,4 +23,7 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnManaChanged();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnGodLevelSetByForce();
 };
