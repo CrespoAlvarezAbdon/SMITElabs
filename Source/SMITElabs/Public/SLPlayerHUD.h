@@ -18,4 +18,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnAbilitySlotLevelled(int Index);
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnHealthChanged();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnManaChanged();
 };

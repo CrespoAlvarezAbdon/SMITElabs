@@ -42,8 +42,11 @@ ASLGod::ASLGod()
 	AbilityAimComponent->SetRelativeScale3D(FVector(4, 4, .1));
 	AbilityAimComponent->SetVisibility(false);	
 
+	SpringArmNoseComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmNoseComponent"));
+	SpringArmNoseComponent->SetupAttachment(RootComponent);
+
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
-	SpringArmComponent->SetupAttachment(RootComponent);
+	SpringArmComponent->SetupAttachment(SpringArmNoseComponent);
 	SpringArmComponent->bUsePawnControlRotation = true;
 	SpringArmComponent->SetRelativeLocation(FVector(0, 0, 90));
 	SpringArmComponent->TargetArmLength = 500;
@@ -682,6 +685,11 @@ void ASLGod::SustainPerFive()
 	else if (CurrentHealth != MaxHealth) CurrentHealth = MaxHealth;
 	if (CurrentMana + CurrentManaPerFive / 5 <= MaxMana) CurrentMana += CurrentManaPerFive / 5;
 	else if (CurrentMana != MaxMana) CurrentMana = MaxMana;
+	if (PlayerHUD)
+	{
+		PlayerHUD->OnHealthChanged();
+		PlayerHUD->OnManaChanged();
+	}
 }
 
 
@@ -840,6 +848,7 @@ void ASLGod::StartAbilityCooldown(int AbilitySlot)
 	if (MaxAbilityCharges[AbilitySlotAbilities[AbilitySlot]] > 1) AbilityChargeMessage = FString::Printf(TEXT("; %i/%i charges remaining."), CurrentAbilityCharges[AbilitySlotAbilities[AbilitySlot]] - 1, MaxAbilityCharges[AbilitySlotAbilities[AbilitySlot]]);
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s used! Mana Cost : %i [%i -> %i]%s"), *AbilityNames[AbilitySlotAbilities[AbilitySlot]], (int)CurrentAbilityManaCosts[AbilitySlot], (int)CurrentMana, (int)CurrentMana - (int)CurrentAbilityManaCosts[AbilitySlot], *AbilityChargeMessage));
 	CurrentMana -= CurrentAbilityManaCosts[AbilitySlot];
+	if (PlayerHUD) PlayerHUD->OnManaChanged();
 	--CurrentAbilityCharges[AbilitySlotAbilities[AbilitySlot]];
 	if (!GetWorld()->GetTimerManager().IsTimerActive(AbilityCooldownTimerHandles[AbilitySlotAbilities[AbilitySlot]]))
 		GetWorld()->GetTimerManager().SetTimer(AbilityCooldownTimerHandles[AbilitySlotAbilities[AbilitySlot]], AbilityCooldownTimerDelegates[AbilitySlotAbilities[AbilitySlot]], CurrentAbilityCooldowns[AbilitySlotAbilities[AbilitySlot]] * (1 - CooldownReductionPercentage), false);
@@ -868,6 +877,7 @@ void ASLGod::TakeHealthDamage(float Val, ISLDangerous* Origin)
 	float OriginalHealth = CurrentHealth;
 	CurrentHealth -= Val;
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s dealt %f damage to %s (%f -> %f)"), *Cast<AActor>(Origin)->GetName(), Val, *this->GetName(), OriginalHealth, CurrentHealth));
+	if (PlayerHUD) PlayerHUD->OnHealthChanged();
 	if (CurrentHealth <= 0)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s has been slain by %s!"), *this->GetName(), *Cast<AActor>(Origin)->GetName()));

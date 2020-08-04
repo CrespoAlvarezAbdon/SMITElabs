@@ -198,6 +198,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Camera")
 	USpringArmComponent* SpringArmComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Camera")
+	USpringArmComponent* SpringArmNoseComponent;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Projectile")
 	TSubclassOf<class ASLRangedBasicProjectile> RangedBasicProjectile;
 
@@ -379,8 +382,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	float BaseHealth{ 600 };
 
+	UPROPERTY(BlueprintReadOnly, Category = "Defense")
 	float CurrentHealth{ 0 };
 
+	UPROPERTY(BlueprintReadOnly, Category = "Defense")
 	float MaxHealth{ 0 };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
@@ -480,8 +485,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	float BaseMana{ 255 };
 
+	UPROPERTY(BlueprintReadOnly, Category = "Ability")
 	float CurrentMana{ 0 };
 
+	UPROPERTY(BlueprintReadOnly, Category = "Ability")
 	float MaxMana{ 0 };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
