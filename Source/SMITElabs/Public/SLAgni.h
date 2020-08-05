@@ -30,6 +30,8 @@ public:
 
 	void AddPathOfFlamesTarget(ASLGod* PathOfFlamesTarget);
 
+	virtual void SetGodLevel(int Val) override;
+
 protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Scene")

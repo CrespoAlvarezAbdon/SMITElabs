@@ -135,6 +135,11 @@ void ASLGod::SetGodLevel(int Val)
 	CurrentHealthPerFive = BaseHealthPerFive + HealthPerFivePerLevel * GodLevel;
 	CurrentManaPerFive = BaseManaPerFive + ManaPerFivePerLevel * GodLevel;
 	for (int i = 0; i < 4; i++) AbilitySlotPoints[i] = 0;
+	for (int i = 0; i < NumberOfAbilities; i++)
+	{
+		CurrentAbilityCooldowns[i] = AbilityRankOneCooldowns[i];
+		CurrentAbilityManaCosts[i] = AbilityRankOneManaCosts[i];
+	}
 	AbilityPoints = GodLevel;
 
 	if (this == UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
@@ -761,7 +766,11 @@ void ASLGod::LevelAbility(int AbilitySlot)
 							CurrentAbilityManaCosts[i] = AbilityRankFiveManaCosts[i];
 							break;
 						}
-						if (AbilitySlotPoints[AbilitySlot] == 1) CurrentAbilityCharges[i] = AbilityChargesAtLevelOne[i];
+						if (AbilitySlotPoints[AbilitySlot] == 1 && bSetAbilityChargesAtLevelOne[i])
+						{
+							CurrentAbilityCharges[i] = AbilityChargesAtLevelOne[i];
+							bSetAbilityChargesAtLevelOne[i] = false;
+						}
 						if (CurrentAbilityCharges[i] < MaxAbilityCharges[i] && !GetWorld()->GetTimerManager().IsTimerActive(AbilityCooldownTimerHandles[i]))
 						{
 							GetWorld()->GetTimerManager().ClearTimer(AbilityCooldownTimerHandles[i]);

@@ -86,6 +86,13 @@ void ASLAgni::AddPathOfFlamesTarget(ASLGod* PathOfFlamesTarget)
 	GetWorldTimerManager().SetTimer(PathOfFlamesTimerHandles.Last(), TimerDelegate, .5, false);
 }
 
+void ASLAgni::SetGodLevel(int Val)
+{
+	Super::SetGodLevel(Val);
+
+	if (GetWorldTimerManager().IsTimerActive(AbilityCooldownTimerHandles[3])) GetWorldTimerManager().PauseTimer(AbilityCooldownTimerHandles[3]);
+}
+
 void ASLAgni::UseNoxiousFumes()
 {
 	if (NoxiousFumes != nullptr) NoxiousFumes->Destroy();
@@ -284,7 +291,11 @@ void ASLAgni::OnAbilityCooldownEnded(int AbilityID)
 
 void ASLAgni::LevelAbility(int AbilitySlot)
 {
-	if (AbilitySlot == 3 && AbilitySlotPoints[3] == 0) HaloMeteorComponents[0]->SetVisibility(true);
+	if (AbilitySlot == 3 && AbilitySlotPoints[3] == 0)
+	{
+		if (GetWorldTimerManager().IsTimerPaused(AbilityCooldownTimerHandles[3])) GetWorldTimerManager().UnPauseTimer(AbilityCooldownTimerHandles[3]);
+		else if (bSetAbilityChargesAtLevelOne[3]) HaloMeteorComponents[0]->SetVisibility(true);
+	}
 
 	Super::LevelAbility(AbilitySlot);
 }

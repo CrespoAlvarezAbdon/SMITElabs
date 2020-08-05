@@ -63,7 +63,7 @@ public:
 
 	virtual void SetBasicAttackSpeed(float Val) override;
 
-	void SetGodLevel(int Val);
+	virtual void SetGodLevel(int Val);
 
 	USceneComponent* GetTargeterLocationComponent();
 
@@ -533,10 +533,13 @@ protected:
 	TArray<int> MaxAbilityCharges = { 1, 1, 1, 3 };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
-	TArray<int> CurrentAbilityCharges = { 1, 1, 1, 0 };
+	TArray<int> CurrentAbilityCharges = { 1, 1, 1, 1 };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
 	TArray<int> AbilityChargesAtLevelOne = { 1, 1, 1, 1 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
+	TArray<bool> bSetAbilityChargesAtLevelOne = { false, false, false, true };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Ability")
 	TArray<float> AbilityRankOneCooldowns = { 12, 15, 15, 18 };
