@@ -254,7 +254,9 @@ void ASLAgni::DealPathOfFlamesDamage(ASLGod* PathOfFlamesTarget, FTimerHandle Pa
 {
 	//The way this ability deals damage to multiple targets that rewalk over the fire is very buggy and should really be redone. I'm just going to leave it as it is for now.
 
-	PathOfFlamesTarget->TakeHealthDamage((PathOfFlamesDamage[AbilitySlotPoints[2] - 1] + GetMagicalPower() * CombustionScaling) * (100 / (CalculateTotalProtections(PathOfFlamesTarget) + 100)), this);
+	int AdditionalPoint = 1;
+	if (AbilitySlotPoints[2] == 0) --AdditionalPoint;
+	PathOfFlamesTarget->TakeHealthDamage((PathOfFlamesDamage[AbilitySlotPoints[2] - AdditionalPoint] + GetMagicalPower() * CombustionScaling) * (100 / (CalculateTotalProtections(PathOfFlamesTarget) + 100)), this);
 	FTimerDelegate TimerDelegate;
 	--PathOfFlamesTick;
 	TArray<AActor*> OverlappingActors;
