@@ -25,5 +25,11 @@ public:
 	void OnManaChanged();
 
 	UFUNCTION(BlueprintImplementableEvent)
+	void OnAbilityAimed(float ManaCost);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnEndAbilityAiming();
+
+	UFUNCTION(BlueprintImplementableEvent)
 	void OnGodLevelSetByForce();
 };

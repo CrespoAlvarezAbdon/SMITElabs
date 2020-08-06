@@ -801,6 +801,7 @@ void ASLGod::AimAbility(int AbilitySlot)
 					if ((int)CurrentMana >= (int)CurrentAbilityManaCosts[AbilitySlot])
 					{
 						CancelAbility();
+						if (PlayerHUD) PlayerHUD->OnAbilityAimed(CurrentAbilityManaCosts[AbilitySlotAbilities[AbilitySlot]]);
 						int FirstAbilityTargeterComponentID{ 0 };
 						for (int i = 0; i < AbilitySlotAbilities[AbilitySlot]; i++)
 						{
@@ -833,6 +834,7 @@ void ASLGod::CancelAbility()
 	ActiveAbilityTargeterComponentIDs.Empty();
 	PrimedAbility = -1;
 	CurrentMaxTargeterRange = 7000;
+	if (PlayerHUD) PlayerHUD->OnEndAbilityAiming();
 }
 
 void ASLGod::OnAbilityCooldownEnded(int AbilityID)
