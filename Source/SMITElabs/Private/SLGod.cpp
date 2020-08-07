@@ -10,6 +10,9 @@ ASLGod::ASLGod()
 	GetCapsuleComponent()->SetCapsuleHalfHeight(312.5);
 	GetCapsuleComponent()->SetCapsuleRadius(156.25);
 
+	PlayerHUDWorldWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("PlayerHUDWorldWidgetComponent"));
+	PlayerHUDWorldWidgetComponent->SetupAttachment(RootComponent);
+
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
 	StaticMeshComponent->SetRelativeScale3D(FVector(3.125, 3.125, 6.250));
 	StaticMeshComponent->SetupAttachment(RootComponent);
@@ -127,6 +130,7 @@ void ASLGod::SetGodLevel(int Val)
 	CurrentBasicAttackSpeed = BaseBasicAttackSpeed + (BaseBasicAttackSpeed * BasicAttackSpeedPerLevel) * GodLevel;
 	CurrentBasicAttackDamage = BaseBasicAttackDamage + BasicAttackDamagePerLevel * GodLevel;
 	MaxHealth = BaseHealth + HealthPerLevel * GodLevel;
+	PlayerHUDWorld->OnMaxHealthChanged();
 	CurrentHealth = MaxHealth;
 	MaxMana = BaseMana + ManaPerLevel * GodLevel;
 	CurrentMana = MaxMana;
@@ -157,6 +161,7 @@ void ASLGod::SetGodLevel(int Val)
 	}
 
 	if (PlayerHUD) PlayerHUD->OnGodLevelSetByForce();
+	PlayerHUDWorld->OnGodLevelChanged();
 }
 
 USceneComponent* ASLGod::GetTargeterLocationComponent()
@@ -230,6 +235,8 @@ void ASLGod::BeginPlay()
 {
 	Super::BeginPlay();
 
+	PlayerHUDWorld = Cast<USLPlayerHUDWorld>(PlayerHUDWorldWidgetComponent->GetUserWidgetObject());
+	PlayerHUDWorld->GetWidgetComponentOwner(this);
 	SetGodLevel(GodLevel);
 	{
 		int j = 0;
@@ -694,6 +701,7 @@ void ASLGod::SustainPerFive()
 		PlayerHUD->OnHealthChanged();
 		PlayerHUD->OnManaChanged();
 	}
+	PlayerHUDWorld->OnHealthChanged(); PlayerHUDWorld->OnManaChanged();
 }
 
 
@@ -859,6 +867,7 @@ void ASLGod::StartAbilityCooldown(int AbilitySlot)
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, ConsoleColor, FString::Printf(TEXT("%s used! Mana Cost : %i [%i -> %i]%s"), *AbilityNames[AbilitySlotAbilities[AbilitySlot]], (int)CurrentAbilityManaCosts[AbilitySlot], (int)CurrentMana, (int)CurrentMana - (int)CurrentAbilityManaCosts[AbilitySlot], *AbilityChargeMessage));
 	CurrentMana -= CurrentAbilityManaCosts[AbilitySlot];
 	if (PlayerHUD) PlayerHUD->OnManaChanged();
+	PlayerHUDWorld->OnManaChanged();
 	--CurrentAbilityCharges[AbilitySlotAbilities[AbilitySlot]];
 	if (!GetWorld()->GetTimerManager().IsTimerActive(AbilityCooldownTimerHandles[AbilitySlotAbilities[AbilitySlot]]))
 		GetWorld()->GetTimerManager().SetTimer(AbilityCooldownTimerHandles[AbilitySlotAbilities[AbilitySlot]], AbilityCooldownTimerDelegates[AbilitySlotAbilities[AbilitySlot]], CurrentAbilityCooldowns[AbilitySlotAbilities[AbilitySlot]] * (1 - CooldownReductionPercentage), false);
@@ -888,6 +897,7 @@ void ASLGod::TakeHealthDamage(float Val, ISLDangerous* Origin)
 	CurrentHealth -= Val;
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s dealt %f damage to %s (%f -> %f)"), *Cast<AActor>(Origin)->GetName(), Val, *this->GetName(), OriginalHealth, CurrentHealth));
 	if (PlayerHUD) PlayerHUD->OnHealthChanged();
+	PlayerHUDWorld->OnHealthChanged();
 	if (CurrentHealth <= 0)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%s has been slain by %s!"), *this->GetName(), *Cast<AActor>(Origin)->GetName()));

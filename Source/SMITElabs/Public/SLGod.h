@@ -12,6 +12,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/ArrowComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "SMITElabs/Public/SLVulnerable.h"
@@ -19,6 +20,7 @@
 #include "SMITElabs/Public/SLMobile.h"
 #include "SMITElabs/Public/SLIdentifiable.h"
 #include "SMITElabs/Public/SLPLayerHUD.h"
+#include "SMITElabs/Public/SLPLayerHUDWorld.h"
 #include "SLGod.generated.h"
 
 class UStaticMeshComponent;
@@ -37,6 +39,8 @@ class ISLDangerous;
 class ISLMobile;
 class ISLIdentifiable;
 class USLPlayerHUD;
+class USLPlayerHUDWorld;
+class UWidgetComponent;
 struct FTimerHandle;
 
 DECLARE_DELEGATE_OneParam(FAbilityDelegate, int);
@@ -171,6 +175,11 @@ protected:
 	TSubclassOf<class USLPlayerHUD> PlayerHUDClass;
 
 	USLPlayerHUD* PlayerHUD;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
+	UWidgetComponent* PlayerHUDWorldWidgetComponent;
+
+	USLPlayerHUDWorld* PlayerHUDWorld;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
 	UStaticMeshComponent* StaticMeshComponent;
