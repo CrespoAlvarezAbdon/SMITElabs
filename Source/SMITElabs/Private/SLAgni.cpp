@@ -95,6 +95,7 @@ void ASLAgni::SetGodLevel(int Val)
 
 void ASLAgni::UseNoxiousFumes()
 {
+	//Possible crash here
 	if (NoxiousFumes != nullptr) NoxiousFumes->Destroy();
 	NoxiousFumes = GetWorld()->SpawnActorDeferred<ASLAgniNoxiousFumes>(NoxiousFumesTile, NoxiousFumesSpawnTransform);
 	NoxiousFumes->SetOrigin(this);
@@ -293,7 +294,7 @@ void ASLAgni::OnAbilityCooldownEnded(int AbilityID)
 
 void ASLAgni::LevelAbility(int AbilitySlot)
 {
-	if (AbilitySlot == 3 && AbilitySlotPoints[3] == 0)
+	if (AbilitySlot == 3 && AbilitySlotPoints[3] == 0 && AbilityPoints > 0)
 	{
 		if (GetWorldTimerManager().IsTimerPaused(AbilityCooldownTimerHandles[3])) GetWorldTimerManager().UnPauseTimer(AbilityCooldownTimerHandles[3]);
 		else if (bSetAbilityChargesAtLevelOne[3]) HaloMeteorComponents[0]->SetVisibility(true);
