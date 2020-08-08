@@ -30,8 +30,5 @@ public:
 	void OnManaChanged();
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnMaxManaChanged();
-
-	UFUNCTION(BlueprintImplementableEvent)
 	void OnGodLevelChanged();
 };

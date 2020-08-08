@@ -411,6 +411,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
 	float BaseHealthPerFive{ 7 };
 
+	UPROPERTY(BlueprintReadOnly, Category = "Defense")
 	float CurrentHealthPerFive{ 0 };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
@@ -504,6 +505,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	float BaseManaPerFive{ 4.7 };
 
+	UPROPERTY(BlueprintReadOnly, Category = "Ability")
 	float CurrentManaPerFive{ 0 };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
